@@ -1,7 +1,9 @@
 package corem.eldad.molestrike;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -10,4 +12,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
     }
+
+    public void play(View view) {
+        Intent intent = new Intent(getBaseContext(), GameActivity.class);
+        startActivity(intent);
+    }
+
+    //Need to make 2 image views with Z-index with an algorithm
 }
