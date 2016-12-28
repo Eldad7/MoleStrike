@@ -1,14 +1,9 @@
 package corem.eldad.molestrike;
 
 import android.os.Bundle;
-import android.os.CountDownTimer;
-import android.os.Handler;
-import android.os.Looper;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ImageView;
-
-import static android.os.Looper.prepare;
 
 
 /**
@@ -24,10 +19,10 @@ public class GameActivity extends AppCompatActivity {
     ImageView bottomRight;
     ImageView current;
     ImageView[] characters;
-    int timer;
+    long timer;
     static boolean lose;
     boolean firstTime = true;
-    MyCountDownTimer counter;
+    Timer counter;
     int j=0;
 
     @Override
@@ -41,7 +36,7 @@ public class GameActivity extends AppCompatActivity {
         ImageView topRight = (ImageView) findViewById(R.id.topRightMole);
         ImageView bottomRight = (ImageView) findViewById(R.id.bottomRightMole);
         characters = new ImageView[] {topLeft, bottomLeft, topMiddle, bottomMiddle, topRight, bottomRight};
-        timer=1;
+        timer=3600;
         lose = false;
         for (int i=0; i<6; i++)
             characters[i].setVisibility(View.VISIBLE);
@@ -69,43 +64,48 @@ public class GameActivity extends AppCompatActivity {
         });
         if (firstTime) {
             firstTime = false;
-            counter = new MyCountDownTimer(timer*4000, 1000);
+            counter = new Timer(timer, 1000);
             counter.start();
         }
         else{
+            System.out.println(timer);
+            counter.setMillisInFuture(timer);
             counter.start();
         }
             counter.setClicked(false);
     }
-    //NEW CLASS THAT EXTENDS COUNTDOWN
 
-    private void GameOn(MyCountDownTimer counter) {
+    private void GameOn(Timer counter) {
         System.out.println("Lose = " + String.valueOf(lose));
         current.setImageResource(R.drawable.talpa1);
-        timer-=0.1;
+        timer-=100;
         counter.setClicked(true);
     }
 
-    private class MyCountDownTimer extends CountDownTimer {
+    private class Timer extends MyCountDownTimer {
         boolean clicked = false;
         boolean finished = false;
+        long mMillisInFuture;
+
+        Timer(long millisInFuture, long countDownInterval) {
+            super(millisInFuture, countDownInterval);
+            mMillisInFuture = millisInFuture;
+        }
+
+        public void setMillisInFuture(long millisInFuture) {
+            super.setMillisInFuture(millisInFuture);
+            mMillisInFuture = millisInFuture;
+        }
 
         void setClicked(boolean clicked){
             System.out.println("Clicked = "+clicked);
             this.clicked = clicked;
         }
 
-        MyCountDownTimer(long millisInFuture, long countDownInterval) {
-            super(millisInFuture, countDownInterval);
-        }
-
-
-
         public void onTick(long millisUntilFinished) {
-            System.out.println("seconds remaining: " + millisUntilFinished / 1000);
+
         }
         public void onFinish() {
-            System.out.println("Time Over");
             if (!clicked)
                 lose=true;
             else{
