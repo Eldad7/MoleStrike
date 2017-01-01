@@ -1,9 +1,11 @@
 package corem.eldad.molestrike;
 
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 
 /**
@@ -23,7 +25,9 @@ public class GameActivity extends AppCompatActivity {
     static boolean lose;
     boolean firstTime = true;
     Timer counter;
-    int j=0;
+    int j;
+    ImageView countDownView;
+    TextView count;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,19 +39,44 @@ public class GameActivity extends AppCompatActivity {
         ImageView bottomMiddle = (ImageView) findViewById(R.id.bottomMiddleMole);
         ImageView topRight = (ImageView) findViewById(R.id.topRightMole);
         ImageView bottomRight = (ImageView) findViewById(R.id.bottomRightMole);
+        j=0;
+        count = (TextView) findViewById(R.id.count);
+        count.setText("Score: " + String.valueOf(j));
+        countDownView = (ImageView) findViewById(R.id.countDownView);
         characters = new ImageView[] {topLeft, bottomLeft, topMiddle, bottomMiddle, topRight, bottomRight};
-        timer=3600;
+        timer=3000;
         lose = false;
-        for (int i=0; i<6; i++)
-            characters[i].setVisibility(View.VISIBLE);
-        play();
+        final int three = R.drawable.number3;
+        final int two = R.drawable.number2;
+        final int one = R.drawable.number1;
+        new CountDownTimer(5000,1000){
+            @Override
+            public void onTick(long l) {
+                System.out.println(l/1000);
+                if (l/1000 == 3){
+                    countDownView.setImageResource(three);
+                    countDownView.setVisibility(View.VISIBLE);
+                }
+                else if (l/1000 == 2){
+                    countDownView.setImageResource(two);
+                }
+                else if (l/1000 == 1){
+                    countDownView.setImageResource(one);
+                }
+            }
+
+            @Override
+            public void onFinish() {
+                countDownView.setVisibility(View.GONE);
+                play();
+            }
+        }.start();
     }
 
         private void play() {
             System.out.println("Playing");
             int random = (int )(Math.random() * 500);
             if(!lose) {
-                System.out.println("Round " + ++j);
                 current = characters[random % 6];
                 startTransition(current);
             }
@@ -78,8 +107,10 @@ public class GameActivity extends AppCompatActivity {
     private void GameOn(Timer counter) {
         System.out.println("Lose = " + String.valueOf(lose));
         current.setImageResource(R.drawable.talpa1);
-        timer-=100;
+        if (timer>700)
+            timer-=100;
         counter.setClicked(true);
+        count.setText("Score: " + String.valueOf(++j));
     }
 
     private class Timer extends MyCountDownTimer {
@@ -106,8 +137,13 @@ public class GameActivity extends AppCompatActivity {
 
         }
         public void onFinish() {
-            if (!clicked)
-                lose=true;
+            if (!clicked) {
+                lose = true;
+                current.setImageResource(R.drawable.talpa1);
+                countDownView.setImageResource(R.drawable.gameover);
+                countDownView.setVisibility(View.VISIBLE);
+                current.setOnClickListener(null);
+            }
             else{
                 play();
             }
