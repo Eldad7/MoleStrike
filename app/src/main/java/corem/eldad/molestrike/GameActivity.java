@@ -35,16 +35,16 @@ public class GameActivity extends AppCompatActivity {
         setContentView(R.layout.activity_game);
         ImageView topLeft = (ImageView) findViewById(R.id.topLeftMole);
         ImageView bottomLeft = (ImageView) findViewById(R.id.bottomLeftMole);
-        ImageView topMiddle = (ImageView) findViewById(R.id.topMiddleMole);
-        ImageView bottomMiddle = (ImageView) findViewById(R.id.bottomMiddleMole);
-        ImageView topRight = (ImageView) findViewById(R.id.topRightMole);
+        ImageView topMiddle = (ImageView) findViewById(R.id.topRightMole);
+        ImageView bottomMiddle = (ImageView) findViewById(R.id.MiddleMole);
+        ImageView topRight = (ImageView) findViewById(R.id.topMiddleMole);
         ImageView bottomRight = (ImageView) findViewById(R.id.bottomRightMole);
         j=0;
         count = (TextView) findViewById(R.id.count);
         count.setText("Score: " + String.valueOf(j));
         countDownView = (ImageView) findViewById(R.id.countDownView);
         characters = new ImageView[] {topLeft, bottomLeft, topMiddle, bottomMiddle, topRight, bottomRight};
-        timer=3000;
+        timer=2600;
         lose = false;
         final int three = R.drawable.number3;
         final int two = R.drawable.number2;
@@ -84,7 +84,7 @@ public class GameActivity extends AppCompatActivity {
 
     private void startTransition(ImageView current) {
         System.out.println("Transitioning");
-        current.setImageResource(R.drawable.talpa4);
+        current.setImageResource(R.drawable.mole);
         current.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -105,12 +105,14 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private void GameOn(Timer counter) {
-        System.out.println("Lose = " + String.valueOf(lose));
-        current.setImageResource(R.drawable.talpa1);
-        if (timer>700)
-            timer-=100;
-        counter.setClicked(true);
-        count.setText("Score: " + String.valueOf(++j));
+        if (!counter.getClicked()) {
+            System.out.println("Lose = " + String.valueOf(lose));
+            current.setImageResource(android.R.color.transparent);
+            if (timer > 700)
+                timer -= 100;
+            counter.setClicked(true);
+            count.setText("Score: " + String.valueOf(++j));
+        }
     }
 
     private class Timer extends MyCountDownTimer {
@@ -133,13 +135,17 @@ public class GameActivity extends AppCompatActivity {
             this.clicked = clicked;
         }
 
+        boolean getClicked(){
+            return clicked;
+        }
+
         public void onTick(long millisUntilFinished) {
 
         }
         public void onFinish() {
             if (!clicked) {
                 lose = true;
-                current.setImageResource(R.drawable.talpa1);
+                current.setImageResource(android.R.color.transparent);
                 countDownView.setImageResource(R.drawable.gameover);
                 countDownView.setVisibility(View.VISIBLE);
                 current.setOnClickListener(null);
