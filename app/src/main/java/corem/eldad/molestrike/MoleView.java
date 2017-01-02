@@ -20,42 +20,28 @@ public class MoleView extends View {
     private static final int FRAME_H = 86;
     Rect[] frames = new Rect[5];
     RectF gameZone;
-    Bitmap spritesBitmap;
+    Bitmap moles;
 
 
     public MoleView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        setWillNotDraw(false);
-        buildMole();
-        gameZone = new RectF(0,250,300,0);
+        setWillNotDraw(true);
+        prepare();
+        gameZone = new RectF(0,80,80,0);
         gameZone.offset(10, 10);
+        moles = BitmapFactory.decodeResource(getResources(), R.drawable.ic_mole1);
+        setWillNotDraw(false);
     }
-}
 
     @Override
     protected void onDraw(Canvas canvas) {
-
-
-        }
-
+        canvas.drawBitmap(moles,frames[0],gameZone,null);
         postInvalidateDelayed(60); // slower = more natural movement
-        postInvalidateOnAnimation(); // too fast
     }
-    private void prepareCharacter() {
-        talpas = BitmapFactory.decodeResource(getResources(), R.drawable.talpas);
-        // setup the rects
-        mCharWidth = 523;
-        mCharHeight = 550;
-        int i = 0; // rect index
-        for (int y = 0; y < 6; y++) { // row
-        for (int x = 0; x < 12; x++) { // column
-        frames[i] = new Rect(x * mCharWidth, y * mCharHeight, (x + 1) * mCharWidth, (y + 1) * mCharHeight);
-        i++;
-        if (i >= NUM_FRAMES) {
-        break;
-        }
-        }
-        }
 
+    private void prepare(){
+        for (int i=0; i<5; i++)
+            frames[i] = new Rect(0,80,80,0);
+    }
 }
 
