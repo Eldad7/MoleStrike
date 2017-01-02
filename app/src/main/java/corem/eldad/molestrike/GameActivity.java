@@ -84,7 +84,7 @@ public class GameActivity extends AppCompatActivity {
 
     private void startTransition(ImageView current) {
         System.out.println("Transitioning");
-        current.setImageResource(R.drawable.mole);
+        current.setImageResource(R.drawable.ic_mole5);
         current.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -107,7 +107,7 @@ public class GameActivity extends AppCompatActivity {
     private void GameOn(Timer counter) {
         if (!counter.getClicked()) {
             System.out.println("Lose = " + String.valueOf(lose));
-            current.setImageResource(android.R.color.transparent);
+            current.setImageResource(R.drawable.ic_mole1);
             if (timer > 700)
                 timer -= 100;
             counter.setClicked(true);
