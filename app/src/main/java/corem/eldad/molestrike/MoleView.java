@@ -29,7 +29,7 @@ public class MoleView extends View {
         prepare();
         gameZone = new RectF(0,80,80,0);
         gameZone.offset(10, 10);
-        moles = BitmapFactory.decodeResource(getResources(), R.drawable.ic_mole1);
+        moles = BitmapFactory.decodeResource(getResources(), R.drawable.mole1);
         setWillNotDraw(false);
     }
 

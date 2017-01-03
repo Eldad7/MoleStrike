@@ -1,5 +1,6 @@
 package corem.eldad.molestrike;
 
+import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.support.v7.app.AppCompatActivity;
@@ -28,6 +29,7 @@ public class GameActivity extends AppCompatActivity {
     int j;
     ImageView countDownView;
     TextView count;
+    AnimationDrawable moleAnimation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +46,8 @@ public class GameActivity extends AppCompatActivity {
         count.setText("Score: " + String.valueOf(j));
         countDownView = (ImageView) findViewById(R.id.countDownView);
         characters = new ImageView[] {topLeft, bottomLeft, topMiddle, bottomMiddle, topRight, bottomRight};
+        for (int i=0; i<6; i++)
+            characters[i].setBackgroundResource(R.drawable.mole1);
         timer=2600;
         lose = false;
         final int three = R.drawable.number3;
@@ -78,13 +82,15 @@ public class GameActivity extends AppCompatActivity {
             int random = (int )(Math.random() * 500);
             if(!lose) {
                 current = characters[random % 6];
+                current.setBackgroundResource(R.drawable.goingup);
                 startTransition(current);
             }
         }
 
     private void startTransition(ImageView current) {
         System.out.println("Transitioning");
-        //current.setImageResource(R.drawable.ic_mole5);
+        moleAnimation = (AnimationDrawable) current.getBackground();
+        moleAnimation.start();
         current.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -107,7 +113,10 @@ public class GameActivity extends AppCompatActivity {
     private void GameOn(Timer counter) {
         if (!counter.getClicked()) {
             System.out.println("Lose = " + String.valueOf(lose));
-            //current.setImageResource(R.drawable.ic_mole1);
+            current.setBackgroundResource(R.drawable.goingdown);
+            moleAnimation = (AnimationDrawable) current.getBackground();
+            moleAnimation.start();
+            current.setImageResource(android.R.color.transparent);
             if (timer > 700)
                 timer -= 100;
             counter.setClicked(true);
@@ -145,7 +154,9 @@ public class GameActivity extends AppCompatActivity {
         public void onFinish() {
             if (!clicked) {
                 lose = true;
-                current.setImageResource(android.R.color.transparent);
+                current.setBackgroundResource(R.drawable.goingdown);
+                moleAnimation = (AnimationDrawable) current.getBackground();
+                moleAnimation.start();
                 countDownView.setImageResource(R.drawable.gameover);
                 countDownView.setVisibility(View.VISIBLE);
                 current.setOnClickListener(null);
