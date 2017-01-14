@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <animation-list xmlns:android="http://schemas.android.com/apk/res/android"
     android:oneshot="true">
-    <item android:drawable="@drawable/mole5" android:duration="20" />
-    <item android:drawable="@drawable/mole4" android:duration="20" />
-    <item android:drawable="@drawable/mole3" android:duration="20" />
-    <item android:drawable="@drawable/mole2" android:duration="20" />
-    <item android:drawable="@drawable/mole1" android:duration="20" />
+    <item android:drawable="@drawable/jmole10" android:duration="1" />
+    <item android:drawable="@drawable/jmole9" android:duration="1" />
+    <item android:drawable="@drawable/jmole8" android:duration="1" />
+    <item android:drawable="@drawable/jmole7" android:duration="1" />
+    <item android:drawable="@drawable/jmole6" android:duration="1" />
+    <item android:drawable="@drawable/jmole5" android:duration="1" />
+    <item android:drawable="@drawable/jmole4" android:duration="1" />
+    <item android:drawable="@drawable/jmole3" android:duration="1" />
+    <item android:drawable="@drawable/jmole2" android:duration="1" />
+    <item android:drawable="@drawable/jmole1" android:duration="1" />
 </animation-list>

@@ -8,6 +8,9 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import static android.R.drawable.ic_media_play;
+import static corem.eldad.molestrike.R.drawable.ic_pause;
+
 
 /**
  * Created by eldadc on 20/12/2016.
@@ -27,9 +30,10 @@ public class GameActivity extends AppCompatActivity {
     boolean firstTime = true;
     Timer counter;
     int j;
-    ImageView countDownView;
+    ImageView countDownView, pausePlay;
     TextView count;
     AnimationDrawable moleAnimation;
+    boolean started = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,14 +45,15 @@ public class GameActivity extends AppCompatActivity {
         ImageView bottomMiddle = (ImageView) findViewById(R.id.MiddleMole);
         ImageView topRight = (ImageView) findViewById(R.id.topMiddleMole);
         ImageView bottomRight = (ImageView) findViewById(R.id.bottomRightMole);
+        pausePlay = (ImageView) findViewById(R.id.pause);
         j=0;
         count = (TextView) findViewById(R.id.count);
         count.setText("Score: " + String.valueOf(j));
         countDownView = (ImageView) findViewById(R.id.countDownView);
         characters = new ImageView[] {topLeft, bottomLeft, topMiddle, bottomMiddle, topRight, bottomRight};
         for (int i=0; i<6; i++)
-            characters[i].setBackgroundResource(R.drawable.mole1);
-        timer=2600;
+            characters[i].setBackgroundResource(R.drawable.jmole1);
+        timer=2500;
         lose = false;
         final int three = R.drawable.number3;
         final int two = R.drawable.number2;
@@ -77,15 +82,33 @@ public class GameActivity extends AppCompatActivity {
         }.start();
     }
 
-        private void play() {
-            System.out.println("Playing");
-            int random = (int )(Math.random() * 500);
-            if(!lose) {
-                current = characters[random % 6];
-                current.setBackgroundResource(R.drawable.goingup);
-                startTransition(current);
-            }
+    @Override
+    protected void onResume(){
+        super.onResume();
+        if ((counter!=null) && (started)) {
+            System.out.println("Paused");
+            pausePlay.setImageResource(ic_pause);
+            counter.start();
         }
+    }
+
+    @Override
+    protected void onPause(){
+        super.onPause();
+        pausePlay.setImageResource(ic_media_play);
+        started = false;
+        counter.cancel();
+    }
+
+    private void play() {
+        System.out.println("Playing");
+        int random = (int )(Math.random() * 500);
+        if(!lose) {
+            current = characters[random % 6];
+            current.setBackgroundResource(R.drawable.goingup);
+            startTransition(current);
+        }
+    }
 
     private void startTransition(ImageView current) {
         System.out.println("Transitioning");
@@ -113,15 +136,35 @@ public class GameActivity extends AppCompatActivity {
     private void GameOn(Timer counter) {
         if (!counter.getClicked()) {
             System.out.println("Lose = " + String.valueOf(lose));
+            current.setImageResource(R.drawable.pow);
             current.setBackgroundResource(R.drawable.goingdown);
             moleAnimation = (AnimationDrawable) current.getBackground();
             moleAnimation.start();
-            current.setImageResource(android.R.color.transparent);
-            if (timer > 700)
+            if ((timer > 800) && (j%5==0))
                 timer -= 100;
             counter.setClicked(true);
             count.setText("Score: " + String.valueOf(++j));
         }
+    }
+
+    public void pause(View view) {
+        pausePlay.setImageResource(ic_media_play);
+        started = false;
+        current.setOnClickListener(null);
+        pausePlay.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                current.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        GameOn(counter);
+                    }
+                });
+                started = true;
+                onResume();
+            }
+        });
+        counter.cancel();
     }
 
     private class Timer extends MyCountDownTimer {
@@ -154,14 +197,17 @@ public class GameActivity extends AppCompatActivity {
         public void onFinish() {
             if (!clicked) {
                 lose = true;
+                setClicked(true);
                 current.setBackgroundResource(R.drawable.goingdown);
                 moleAnimation = (AnimationDrawable) current.getBackground();
                 moleAnimation.start();
                 countDownView.setImageResource(R.drawable.gameover);
                 countDownView.setVisibility(View.VISIBLE);
+                current.setImageResource(android.R.color.transparent);
                 current.setOnClickListener(null);
             }
             else{
+                current.setImageResource(android.R.color.transparent);
                 play();
             }
             finished = true;
