@@ -1,9 +1,13 @@
 package corem.eldad.molestrike;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.PreferenceManager;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
@@ -32,13 +36,19 @@ public class GameActivity extends AppCompatActivity {
     TextView count;
     AnimationDrawable moleAnimation;
     boolean started = true;
-    private Music hitSound;
+    private Music hitSound, music;
     CountDownTimer countDown;
+    private SharedPreferences prefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
+        Intent intent = getIntent();
+//        Bundle b=intent.getExtras();
+//        music = (Music) intent.getSerializableExtra("music");
+        music = new Music(this.getBaseContext());
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
         ImageView topLeft = (ImageView) findViewById(R.id.topLeftMole);
         ImageView bottomLeft = (ImageView) findViewById(R.id.bottomLeftMole);
         ImageView topMiddle = (ImageView) findViewById(R.id.topRightMole);
@@ -55,7 +65,6 @@ public class GameActivity extends AppCompatActivity {
             characters[i].setBackgroundResource(R.drawable.jmole1);
         timer=2500;
         lose = false;
-        hitSound = new Music(this.getBaseContext());
         final int three = R.drawable.number3;
         final int two = R.drawable.number2;
         final int one = R.drawable.number1;
@@ -87,13 +96,55 @@ public class GameActivity extends AppCompatActivity {
     protected void onResume(){
         super.onResume();
         pausePlay.setBackgroundResource(R.drawable.pause);
+        if (current != null) {
+            current.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    if (started) {
+                        if (event.getAction() == MotionEvent.ACTION_DOWN)
+                            if (hitSound != null)
+                                hitSound.playHit();
+                        if (event.getAction() == MotionEvent.ACTION_UP)
+                            GameOn(counter);
+                        return true;
+                    }
+                    return false;
+                }
+            });
+        }
         if ((counter!=null) && (!started)) {
             counter.start();
         }
-        if ((!started) && (current!=null)){
+        if ((!started) && (current==null)){
             countDown.start();
         }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                togglePrefs(prefs);
+            }
+        }).start();
         started = true;
+    }
+
+    private void togglePrefs(SharedPreferences prefs) {
+        System.out.println(prefs.getBoolean("soundFX", true));
+        if (prefs.getBoolean("soundFX", true)){
+            System.out.println("true");
+            hitSound = new Music(this.getBaseContext());
+        }
+        else{
+            System.out.println("false");
+            hitSound = null;
+        }
+        if (prefs.getBoolean("music", true)) {
+            if (!music.musicIsPlaying)
+                music.run();
+        }
+        else{
+            if (music.musicIsPlaying)
+                music.pause();
+        }
     }
 
     @Override
@@ -123,10 +174,8 @@ public class GameActivity extends AppCompatActivity {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (started) {
-                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                        System.out.println("HIT!");
+                    if ((event.getAction() == MotionEvent.ACTION_DOWN) && (hitSound!=null))
                         hitSound.playHit();
-                    }
                     if (event.getAction() == MotionEvent.ACTION_UP)
                         GameOn(counter);
                     return true;
@@ -164,38 +213,17 @@ public class GameActivity extends AppCompatActivity {
 
     public void pause(View view) {
         pausePlay.setBackgroundResource(R.drawable.play);
-        //MainActivity.pauseMusic().pause();
         started = false;
         if (current != null)
             current.setOnTouchListener(null);
         else{
             countDown.cancel();
         }
-        pausePlay.setOnClickListener(new View.OnClickListener() {
-             @Override
-             public void onClick(View v) {
-                 if (current != null) {
-                     current.setOnTouchListener(new View.OnTouchListener() {
-                         @Override
-                         public boolean onTouch(View v, MotionEvent event) {
-                             if (started) {
-                                 if (event.getAction() == MotionEvent.ACTION_DOWN)
-                                     if (hitSound != null)
-                                        hitSound.playHit();
-                                 if (event.getAction() == MotionEvent.ACTION_UP)
-                                     GameOn(counter);
-                                 return true;
-                             }
-                             return false;
-                         }
-                     });
-                 }
-                 onResume();
-             }
-         });
-
         if (counter != null)
             counter.cancel();
+        Intent intent = new Intent(getBaseContext(), Settings.class);
+        ConstraintLayout cl = (ConstraintLayout) findViewById(R.id.activity_main);
+        startActivity(intent);
     }
 
     private class Timer extends MyCountDownTimer {

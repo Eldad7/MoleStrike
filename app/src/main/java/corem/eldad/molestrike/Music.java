@@ -6,11 +6,12 @@ import android.media.MediaPlayer;
 import android.media.SoundPool;
 
 import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * @author ©EldadC
  */
-public class Music implements Runnable, MediaPlayer.OnCompletionListener {
+public class Music implements Runnable, MediaPlayer.OnCompletionListener,Serializable {
     private static SoundPool soundPool;
     private int hitSound;
     MediaPlayer mPlayer;

@@ -1,3 +1,16 @@
 <resources>
     <string name="app_name">Mole Strike</string>
+    <string name="themes">Themes</string>
+
+    <string-array name="themes_array_titles">
+        <item>Forest</item>
+        <item>Street</item>
+        <item>Moon</item>
+    </string-array>
+
+    <string-array name="themes_array_values">
+        <item>forestbackground</item>
+        <item>streetbackground</item>
+        <item>moonbackground</item>
+    </string-array>
 </resources>
