@@ -156,7 +156,6 @@
     <ImageButton
         android:layout_width="wrap_content"
         android:layout_height="43dp"
-        app:srcCompat="@drawable/ic_pause"
         android:id="@+id/pause"
         android:layout_marginStart="16dp"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -170,6 +169,7 @@
         app:layout_constraintBottom_toTopOf="@+id/topRightMole"
         android:layout_marginBottom="8dp"
         app:layout_constraintVertical_bias="0.0"
-        android:onClick="pause"/>
+        android:onClick="pause"
+        android:background="@drawable/pause"/>
 
 </android.support.constraint.ConstraintLayout>

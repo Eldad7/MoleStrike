@@ -4,12 +4,10 @@ import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.support.v7.app.AppCompatActivity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import static android.R.drawable.ic_media_play;
-import static corem.eldad.molestrike.R.drawable.ic_pause;
 
 
 /**
@@ -34,6 +32,8 @@ public class GameActivity extends AppCompatActivity {
     TextView count;
     AnimationDrawable moleAnimation;
     boolean started = true;
+    private Music hitSound;
+    CountDownTimer countDown;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,10 +55,11 @@ public class GameActivity extends AppCompatActivity {
             characters[i].setBackgroundResource(R.drawable.jmole1);
         timer=2500;
         lose = false;
+        hitSound = new Music(this.getBaseContext());
         final int three = R.drawable.number3;
         final int two = R.drawable.number2;
         final int one = R.drawable.number1;
-        new CountDownTimer(5000,1000){
+        countDown = new CountDownTimer(5000,1000){
             @Override
             public void onTick(long l) {
                 System.out.println(l/1000);
@@ -85,19 +86,23 @@ public class GameActivity extends AppCompatActivity {
     @Override
     protected void onResume(){
         super.onResume();
-        if ((counter!=null) && (started)) {
-            System.out.println("Paused");
-            pausePlay.setImageResource(ic_pause);
+        pausePlay.setBackgroundResource(R.drawable.pause);
+        if ((counter!=null) && (!started)) {
             counter.start();
         }
+        if ((!started) && (current!=null)){
+            countDown.start();
+        }
+        started = true;
     }
 
     @Override
     protected void onPause(){
         super.onPause();
-        pausePlay.setImageResource(ic_media_play);
+        pausePlay.setBackgroundResource(R.drawable.play);
         started = false;
-        counter.cancel();
+        if (counter != null)
+            counter.cancel();
     }
 
     private void play() {
@@ -114,10 +119,19 @@ public class GameActivity extends AppCompatActivity {
         System.out.println("Transitioning");
         moleAnimation = (AnimationDrawable) current.getBackground();
         moleAnimation.start();
-        current.setOnClickListener(new View.OnClickListener() {
+        current.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public void onClick(View view) {
-                GameOn(counter);
+            public boolean onTouch(View v, MotionEvent event) {
+                if (started) {
+                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                        System.out.println("HIT!");
+                        hitSound.playHit();
+                    }
+                    if (event.getAction() == MotionEvent.ACTION_UP)
+                        GameOn(counter);
+                    return true;
+                }
+                return false;
             }
         });
         if (firstTime) {
@@ -138,9 +152,10 @@ public class GameActivity extends AppCompatActivity {
             System.out.println("Lose = " + String.valueOf(lose));
             current.setImageResource(R.drawable.pow);
             current.setBackgroundResource(R.drawable.goingdown);
+            current.setOnTouchListener(null);
             moleAnimation = (AnimationDrawable) current.getBackground();
             moleAnimation.start();
-            if ((timer > 800) && (j%5==0))
+            if ((timer > 800) && (j%3==0))
                 timer -= 100;
             counter.setClicked(true);
             count.setText("Score: " + String.valueOf(++j));
@@ -148,23 +163,39 @@ public class GameActivity extends AppCompatActivity {
     }
 
     public void pause(View view) {
-        pausePlay.setImageResource(ic_media_play);
+        pausePlay.setBackgroundResource(R.drawable.play);
+        //MainActivity.pauseMusic().pause();
         started = false;
-        current.setOnClickListener(null);
-        pausePlay.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-                current.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        GameOn(counter);
-                    }
-                });
-                started = true;
-                onResume();
-            }
-        });
-        counter.cancel();
+        if (current != null)
+            current.setOnTouchListener(null);
+        else{
+            countDown.cancel();
+        }
+        pausePlay.setOnClickListener(new View.OnClickListener() {
+             @Override
+             public void onClick(View v) {
+                 if (current != null) {
+                     current.setOnTouchListener(new View.OnTouchListener() {
+                         @Override
+                         public boolean onTouch(View v, MotionEvent event) {
+                             if (started) {
+                                 if (event.getAction() == MotionEvent.ACTION_DOWN)
+                                     if (hitSound != null)
+                                        hitSound.playHit();
+                                 if (event.getAction() == MotionEvent.ACTION_UP)
+                                     GameOn(counter);
+                                 return true;
+                             }
+                             return false;
+                         }
+                     });
+                 }
+                 onResume();
+             }
+         });
+
+        if (counter != null)
+            counter.cancel();
     }
 
     private class Timer extends MyCountDownTimer {
@@ -204,7 +235,7 @@ public class GameActivity extends AppCompatActivity {
                 countDownView.setImageResource(R.drawable.gameover);
                 countDownView.setVisibility(View.VISIBLE);
                 current.setImageResource(android.R.color.transparent);
-                current.setOnClickListener(null);
+                current.setOnTouchListener(null);
             }
             else{
                 current.setImageResource(android.R.color.transparent);
