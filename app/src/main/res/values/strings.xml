@@ -1,8 +1,5 @@
 <resources>
     <string name="app_name">Mole Strike</string>
-<<<<<<< HEAD
-    <string name="settings">Settings</string>
-=======
     <string name="themes">Themes</string>
 
     <string-array name="themes_array_titles">
@@ -16,5 +13,4 @@
         <item>streetbackground</item>
         <item>moonbackground</item>
     </string-array>
->>>>>>> 82c5723d28543d34a248293a7ec3fe6fc508dbea
 </resources>
