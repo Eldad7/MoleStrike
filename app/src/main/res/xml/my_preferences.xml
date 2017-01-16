@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory
+        android:title="Settings"/>
+
+        <EditTextPreference
+            android:capitalize="words"
+            android:defaultValue="Player1"
+            android:inputType="textCapWords"
+            android:key="display_name"
+            android:maxLines="1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="Your Name" />
+
+        <SwitchPreference
+            android:key="music"
+            android:title="music"
+            android:textOff="Music OFF"
+            android:textOn="Music ON"
+            android:defaultValue="true" />
+
+        <SwitchPreference
+            android:key="soundFX"
+            android:title="soundFX"
+            android:textOff="Sound OFF"
+            android:textOn="Sound ON"
+            android:defaultValue="true" />
+
+        <ListPreference
+            android:defaultValue="forestbackground"
+            android:title="@string/themes"
+            android:entries="@array/themes_array_titles"
+            android:entryValues="@array/themes_array_values"
+            android:key="themes" />
+
+
+</PreferenceScreen>
