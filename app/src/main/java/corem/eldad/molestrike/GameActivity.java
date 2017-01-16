@@ -35,7 +35,8 @@ public class GameActivity extends AppCompatActivity {
     ImageView countDownView, pausePlay;
     TextView count;
     AnimationDrawable moleAnimation;
-    boolean started = true;
+    boolean started;
+    boolean resumed = false;
     private Music hitSound, music;
     CountDownTimer countDown;
     private SharedPreferences prefs;
@@ -95,36 +96,22 @@ public class GameActivity extends AppCompatActivity {
     @Override
     protected void onResume(){
         super.onResume();
-        pausePlay.setBackgroundResource(R.drawable.pause);
-        if (current != null) {
-            current.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    if (started) {
-                        if (event.getAction() == MotionEvent.ACTION_DOWN)
-                            if (hitSound != null)
-                                hitSound.playHit();
-                        if (event.getAction() == MotionEvent.ACTION_UP)
-                            GameOn(counter);
-                        return true;
-                    }
-                    return false;
-                }
-            });
-        }
-        if ((counter!=null) && (!started)) {
-            counter.start();
-        }
-        if ((!started) && (current==null)){
-            countDown.start();
-        }
         new Thread(new Runnable() {
             @Override
             public void run() {
                 togglePrefs(prefs);
             }
         }).start();
-        started = true;
+        pausePlay.setBackgroundResource(R.drawable.pause);
+        if ((resumed) && (current==null)){
+            countDown.start();
+            System.out.println("Countdown");
+        }
+        if (resumed) {
+            System.out.println("Resumed");
+            play();
+        }
+        resumed = false;
     }
 
     private void togglePrefs(SharedPreferences prefs) {
@@ -148,18 +135,21 @@ public class GameActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onPause(){
-        super.onPause();
+    protected void onStop(){
+        super.onStop();
         pausePlay.setBackgroundResource(R.drawable.play);
-        started = false;
         if (counter != null)
             counter.cancel();
+        for (int i=0; i<6; i++){
+                characters[i].setImageResource(android.R.color.transparent);
+                characters[i].setBackgroundResource(R.drawable.jmole1);
+        }
     }
 
     private void play() {
-        System.out.println("Playing");
+        started=true;
         int random = (int )(Math.random() * 500);
-        if(!lose) {
+        if (!lose) {
             current = characters[random % 6];
             current.setBackgroundResource(R.drawable.goingup);
             startTransition(current);
@@ -213,17 +203,17 @@ public class GameActivity extends AppCompatActivity {
 
     public void pause(View view) {
         pausePlay.setBackgroundResource(R.drawable.play);
-        started = false;
+        resumed = true;
         if (current != null)
             current.setOnTouchListener(null);
+        else if (counter != null)
+            counter.cancel();
         else{
             countDown.cancel();
         }
-        if (counter != null)
-            counter.cancel();
         Intent intent = new Intent(getBaseContext(), Settings.class);
-        ConstraintLayout cl = (ConstraintLayout) findViewById(R.id.activity_main);
         startActivity(intent);
+        onStop();
     }
 
     private class Timer extends MyCountDownTimer {
@@ -254,7 +244,7 @@ public class GameActivity extends AppCompatActivity {
 
         }
         public void onFinish() {
-            if (!clicked) {
+            if ((!clicked) && (!resumed)) {
                 lose = true;
                 setClicked(true);
                 current.setBackgroundResource(R.drawable.goingdown);
