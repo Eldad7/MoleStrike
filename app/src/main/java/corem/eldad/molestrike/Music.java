@@ -17,6 +17,8 @@ public class Music implements Runnable, MediaPlayer.OnCompletionListener,Seriali
     MediaPlayer mPlayer;
     boolean musicIsPlaying = false;
     Context appContext;
+    Float volumeLevel = 1.0f;
+    Float rate = 1.0f;
 
     public Music(Context context) {
         soundPool = new SoundPool(2, AudioManager.STREAM_MUSIC, 0);
@@ -25,7 +27,7 @@ public class Music implements Runnable, MediaPlayer.OnCompletionListener,Seriali
     }
 
     public void playHit() {
-        soundPool.play(hitSound, 1.0f, 1.0f, 1, 0, 1.0f);
+        soundPool.play(hitSound, volumeLevel, volumeLevel, 1, 0, rate);
     }
 
     public void pause(){

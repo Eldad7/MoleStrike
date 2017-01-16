@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:tools="http://schemas.android.com/tools"
-    xmlns:android="http://schemas.android.com/apk/res/android" >
+<android.support.v7.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
 
-    <PreferenceCategory
+    <android.support.v7.preference.PreferenceCategory
         android:title="Settings"/>
 
         <EditTextPreference
@@ -23,6 +23,12 @@
             android:defaultValue="true"
             android:background="@drawable/music"/>
 
+        <android.support.v7.preference.SeekBarPreference
+            android:defaultValue="100"
+            android:title="Volume"
+            android:key="MusicVolume"
+            android:id="@+id/musicSeekbar"/>
+
         <SwitchPreference
             android:key="soundFX"
             android:title="soundFX"
@@ -31,7 +37,13 @@
             android:defaultValue="true"
             android:background="@drawable/soundfx" />
 
-        <ListPreference
+    <android.support.v7.preference.SeekBarPreference
+        android:defaultValue="100"
+        android:title="Volume"
+        android:key="MusicVolume"
+        android:id="@+id/soundFXSeekbar"/>
+
+        <android.support.v7.preference.SwitchPreference.ListPreference
             android:defaultValue="forestbackground"
             android:title="@string/themes"
             android:entries="@array/themes_array_titles"
@@ -39,4 +51,5 @@
             android:key="themes" />
 
 
-</PreferenceScreen>
+</android.support.v7.preference.PreferenceScreen>
+

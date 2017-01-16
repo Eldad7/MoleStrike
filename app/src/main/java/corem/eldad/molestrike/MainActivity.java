@@ -66,13 +66,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume(){
         super.onResume();
-        cl.setBackgroundResource(background);
         new Thread(new Runnable() {
             @Override
             public void run() {
                 togglePrefs(prefs);
             }
         }).start();
+        cl.setBackgroundResource(background);
     }
 
     private void pullFromDB(){
@@ -110,9 +110,9 @@ public class MainActivity extends AppCompatActivity {
             name = newName;
             dbHelper.close();
         }
-        if (prefs.getString("themes", "0").equals("forestbackground"))
+        if (prefs.getBoolean("forestbackground", true))
             background = R.drawable.forestbackground;
-        else if (prefs.getString("themes", "0").equals("desertbackground"))
+        else if (prefs.getBoolean("desertbackground", false))
             background = R.drawable.desertbackground;
 
     }
@@ -156,7 +156,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void settingsMenu(View view) {
-        Intent intent = new Intent(getBaseContext(), Settings.class);
-        startActivity(intent);
+//        Intent intent = new Intent(getBaseContext(), Settings.class);
+//        startActivity(intent);
+        SettingsDialog cdd=new SettingsDialog(MainActivity.this);
+        cdd.show();
     }
 }

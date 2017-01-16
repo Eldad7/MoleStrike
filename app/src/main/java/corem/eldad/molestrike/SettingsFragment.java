@@ -1,30 +1,19 @@
 package corem.eldad.molestrike;
 
-
 import android.os.Bundle;
-import android.preference.PreferenceActivity;
-import android.preference.PreferenceFragment;
-import android.preference.SwitchPreference;
 import android.support.v7.preference.Preference;
+import android.support.v7.preference.PreferenceFragmentCompat;
 import android.support.v7.preference.PreferenceManager;
-import android.widget.SeekBar;
 
 /**
- * Created by The Gate Keeper on 1/15/2017.
+ * Created by The Gate Keeper on 1/16/2017.
  */
 
-public class Settings extends PreferenceActivity {
-
-    static PrefsFragment pf;
+public class SettingsFragment extends PreferenceFragmentCompat {
 
     @Override
-    protected void onCreate(Bundle savedInstanceState){
-        super.onCreate(savedInstanceState);
-
-        if (savedInstanceState == null) {
-            getFragmentManager().beginTransaction().replace(android.R.id.content, new Settings.PrefsFragment()).commit();
-        }
-        SeekBar bar = new SeekBar(this.getBaseContext());
+    public void onCreatePreferences(Bundle savedInstanceState, String s) {
+        addPreferencesFromResource(R.xml.my_preferences);
 
         initPref("display_name");
         initPref("music");
@@ -34,7 +23,7 @@ public class Settings extends PreferenceActivity {
     }
 
     private void initPref(String prefKey) {
-        Preference preference = new Preference(this.getBaseContext());
+        Preference preference = findPreference(prefKey);
         preference.setOnPreferenceChangeListener(sPreferenceChangeListener);
         sPreferenceChangeListener.onPreferenceChange(preference,
                 PreferenceManager.getDefaultSharedPreferences(preference.getContext())
@@ -52,14 +41,4 @@ public class Settings extends PreferenceActivity {
         }
     };
 
-    public static class PrefsFragment extends PreferenceFragment {
-
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-
-            // Load the preferences from an XML resource
-            addPreferencesFromResource(R.xml.my_preferences);
-        }
-    }
 }
