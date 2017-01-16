@@ -10,12 +10,11 @@
         android:singleLine="true"
         android:title="Your Name"/>
 
-    <ListPreference
-        android:defaultValue="Fade"
-        android:title="@string/transitions"
-        android:entries="@array/transition_array_titles"
-        android:entryValues="@array/transition_array_values"
-        android:key="list_preference" />
-
+    <!--<ListPreference-->
+        <!--android:defaultValue="Fade"-->
+        <!--android:title="@string/transitions"-->
+        <!--android:entries="@array/transition_array_titles"-->
+        <!--android:entryValues="@array/transition_array_values"-->
+        <!--android:key="list_preference" />-->
 
 </PreferenceScreen>
