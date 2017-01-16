@@ -5,7 +5,6 @@
     android:id="@+id/activity_game"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/forestbackground"
     tools:context="corem.eldad.molestrike.GameActivity">
 
     <ImageView
@@ -29,7 +28,7 @@
         android:layout_marginTop="120dp"
         app:layout_constraintBottom_toBottomOf="parent"
         android:layout_marginBottom="16dp"
-        app:layout_constraintVertical_bias="0.42" />
+        app:layout_constraintVertical_bias="0.42000002" />
 
     <ImageView
         android:layout_width="86dp"
@@ -46,7 +45,8 @@
         tools:layout_constraintLeft_creator="1"
         android:layout_marginLeft="44dp"
         android:layout_marginRight="44dp"
-        app:layout_constraintHorizontal_bias="0.33" />
+        app:layout_constraintHorizontal_bias="0.4"
+        app:layout_constraintVertical_bias="0.2" />
 
     <ImageView
         android:layout_width="86dp"
@@ -80,7 +80,7 @@
         android:layout_marginTop="120dp"
         app:layout_constraintBottom_toBottomOf="parent"
         android:layout_marginBottom="16dp"
-        app:layout_constraintVertical_bias="0.42" />
+        app:layout_constraintVertical_bias="0.42000002" />
 
     <ImageView
         android:id="@+id/bottomRightMole"

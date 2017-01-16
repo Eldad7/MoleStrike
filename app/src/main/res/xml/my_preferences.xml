@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+<PreferenceScreen xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android" >
 
     <PreferenceCategory
         android:title="Settings"/>
@@ -19,14 +20,16 @@
             android:title="music"
             android:textOff="Music OFF"
             android:textOn="Music ON"
-            android:defaultValue="true" />
+            android:defaultValue="true"
+            android:background="@drawable/music"/>
 
         <SwitchPreference
             android:key="soundFX"
             android:title="soundFX"
             android:textOff="Sound OFF"
             android:textOn="Sound ON"
-            android:defaultValue="true" />
+            android:defaultValue="true"
+            android:background="@drawable/soundfx" />
 
         <ListPreference
             android:defaultValue="forestbackground"

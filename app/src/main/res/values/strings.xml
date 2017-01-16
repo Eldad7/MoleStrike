@@ -4,13 +4,13 @@
 
     <string-array name="themes_array_titles">
         <item>Forest</item>
-        <item>Street</item>
+        <item>Desert</item>
         <item>Moon</item>
     </string-array>
 
     <string-array name="themes_array_values">
         <item>forestbackground</item>
-        <item>streetbackground</item>
+        <item>desertbackground</item>
         <item>moonbackground</item>
     </string-array>
 </resources>

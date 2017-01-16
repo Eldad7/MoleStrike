@@ -8,10 +8,14 @@ import android.os.CountDownTimer;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import java.lang.reflect.Field;
 
 
 /**
@@ -19,19 +23,19 @@ import android.widget.TextView;
  */
 
 public class GameActivity extends AppCompatActivity {
-    ImageView topLeft;
+    /*ImageView topLeft;
     ImageView topMiddle;
     ImageView topRight;
     ImageView bottomLeft;
     ImageView bottomMiddle;
-    ImageView bottomRight;
+    ImageView bottomRight;*/
     ImageView current;
     ImageView[] characters;
     long timer;
     static boolean lose;
     boolean firstTime = true;
     Timer counter;
-    int j;
+    int j,numberOfMoles;
     ImageView countDownView, pausePlay;
     TextView count;
     AnimationDrawable moleAnimation;
@@ -40,29 +44,34 @@ public class GameActivity extends AppCompatActivity {
     private Music hitSound, music;
     CountDownTimer countDown;
     private SharedPreferences prefs;
+    int background;
+    ConstraintLayout cl;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_game);
-        Intent intent = getIntent();
-//        Bundle b=intent.getExtras();
-//        music = (Music) intent.getSerializableExtra("music");
         music = new Music(this.getBaseContext());
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        ImageView topLeft = (ImageView) findViewById(R.id.topLeftMole);
-        ImageView bottomLeft = (ImageView) findViewById(R.id.bottomLeftMole);
-        ImageView topMiddle = (ImageView) findViewById(R.id.topRightMole);
-        ImageView bottomMiddle = (ImageView) findViewById(R.id.MiddleMole);
-        ImageView topRight = (ImageView) findViewById(R.id.topMiddleMole);
-        ImageView bottomRight = (ImageView) findViewById(R.id.bottomRightMole);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                togglePrefs(prefs);
+            }
+        }).start();
+        setContentView(R.layout.activity_game);
+        cl = (ConstraintLayout) findViewById(R.id.activity_game);
+        Intent intent = getIntent();
+        Bundle b=intent.getExtras();
+//        music = (Music) intent.getSerializableExtra("music");
+        numberOfMoles = b.getInt("numberOfMoles");
+        initViews(numberOfMoles);
         pausePlay = (ImageView) findViewById(R.id.pause);
         j=0;
         count = (TextView) findViewById(R.id.count);
         count.setText("Score: " + String.valueOf(j));
         countDownView = (ImageView) findViewById(R.id.countDownView);
-        characters = new ImageView[] {topLeft, bottomLeft, topMiddle, bottomMiddle, topRight, bottomRight};
-        for (int i=0; i<6; i++)
+
+        for (int i=0; i<numberOfMoles; i++)
             characters[i].setBackgroundResource(R.drawable.jmole1);
         timer=2500;
         lose = false;
@@ -93,6 +102,23 @@ public class GameActivity extends AppCompatActivity {
         }.start();
     }
 
+    private void initViews(int moles) {
+        ImageView topLeft = (ImageView) findViewById(R.id.topLeftMole);
+        ImageView bottomLeft = (ImageView) findViewById(R.id.bottomLeftMole);
+        ImageView topMiddle = (ImageView) findViewById(R.id.topRightMole);
+        ImageView middleMole = (ImageView) findViewById(R.id.MiddleMole);
+        ImageView topRight = (ImageView) findViewById(R.id.topMiddleMole);
+        ImageView bottomRight = (ImageView) findViewById(R.id.bottomRightMole);
+        if (moles==9){
+            ImageView leftMiddle = (ImageView) findViewById(R.id.leftMiddleMole);
+            ImageView bottomMiddleMole = (ImageView) findViewById(R.id.bottomMiddleMole);
+            ImageView rightMiddleMole = (ImageView) findViewById(R.id.rightMiddleMole);
+            characters = new ImageView[] {topLeft, bottomLeft, topMiddle, middleMole, topRight, bottomRight, leftMiddle, bottomMiddleMole, rightMiddleMole};
+        }
+        else
+            characters = new ImageView[] {topLeft, bottomLeft, topMiddle, middleMole, topRight, bottomRight};
+    }
+
     @Override
     protected void onResume(){
         super.onResume();
@@ -102,6 +128,7 @@ public class GameActivity extends AppCompatActivity {
                 togglePrefs(prefs);
             }
         }).start();
+        cl.setBackgroundResource(background);
         pausePlay.setBackgroundResource(R.drawable.pause);
         if ((resumed) && (current==null)){
             countDown.start();
@@ -132,6 +159,10 @@ public class GameActivity extends AppCompatActivity {
             if (music.musicIsPlaying)
                 music.pause();
         }
+        if (prefs.getString("themes", "0").equals("forestbackground"))
+            background = R.drawable.forestbackground;
+        else if (prefs.getString("themes", "0").equals("desertbackground"))
+            background = R.drawable.desertbackground;
     }
 
     @Override
@@ -150,7 +181,7 @@ public class GameActivity extends AppCompatActivity {
         started=true;
         int random = (int )(Math.random() * 500);
         if (!lose) {
-            current = characters[random % 6];
+            current = characters[random % numberOfMoles];
             current.setBackgroundResource(R.drawable.goingup);
             startTransition(current);
         }
