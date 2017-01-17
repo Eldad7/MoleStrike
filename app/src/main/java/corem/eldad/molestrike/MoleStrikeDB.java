@@ -14,16 +14,17 @@ public class MoleStrikeDB extends SQLiteOpenHelper {
 
     private static final String TEXT_TYPE = " TEXT";
     private static final String NUMBER_TYPE = " INTEGER";
+    private static final String BOOLEAN_TYPE = " BOOLEAN";
     private static final String COMMA_SEP = ",";
     private static final String SQL_CREATE_ENTRIES =
             "CREATE TABLE " + player.TABLE_NAME + " (" + player.COLUMN_NAME + TEXT_TYPE + COMMA_SEP +
                     player.COLUMN_EMAIL + TEXT_TYPE + COMMA_SEP +  player.COLUMN_TOP_SCORE + NUMBER_TYPE + COMMA_SEP +
-                    player.COLUMN_LEVEL + NUMBER_TYPE + " )";
+                    player.COLUMN_LEVEL + NUMBER_TYPE + COMMA_SEP + player.COLUMN_PLAYER + BOOLEAN_TYPE + " )";
 
     private static final String SQL_DELETE_ENTRIES =
             "DROP TABLE IF EXISTS " + player.TABLE_NAME;
     public static final int DATABASE_VERSION = 1;
-    public static final String DATABASE_NAME = "birthdays.db";
+    public static final String DATABASE_NAME = "mole_strike.db";
 
     public MoleStrikeDB(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -47,6 +48,7 @@ public class MoleStrikeDB extends SQLiteOpenHelper {
         public static final String COLUMN_EMAIL = "email";
         public static final String COLUMN_TOP_SCORE = "topScore";
         public static final String COLUMN_LEVEL = "level";
+        public static final String COLUMN_PLAYER = "player";
     }
 
     public void updateTopScore(String fullName, int topScore, SQLiteDatabase db) {
@@ -63,11 +65,11 @@ public class MoleStrikeDB extends SQLiteOpenHelper {
         int rows = db.update(player.TABLE_NAME, values, player.COLUMN_NAME + " = ? ", new String[]{fullName});
     }
 
-    public void updateName(String newName, String name, SQLiteDatabase db) {
+    public void updateName(String newName, SQLiteDatabase db) {
         this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(player.COLUMN_NAME, newName);
-        int rows = db.update(player.TABLE_NAME, values, player.COLUMN_NAME + " = ? ", new String[]{name});
+        int rows = db.update(player.TABLE_NAME, values, player.COLUMN_PLAYER + " = ? ", new String[]{"true"});
     }
 
     public void facebookLogin(String fullName, String email, String oldName, SQLiteDatabase db){
@@ -76,15 +78,5 @@ public class MoleStrikeDB extends SQLiteOpenHelper {
         values.put(player.COLUMN_NAME, fullName);
         values.put(player.COLUMN_EMAIL, email);
         int rows = db.update(player.TABLE_NAME, values, player.COLUMN_NAME + " = ? ", new String[]{oldName});
-    }
-
-    public void newUser(String fullName, String email, int topScore, int minimumLevel, SQLiteDatabase db){
-        this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put(player.COLUMN_NAME, fullName);
-        values.put(player.COLUMN_EMAIL, email);
-        values.put(player.COLUMN_TOP_SCORE, topScore);
-        values.put(player.COLUMN_LEVEL, minimumLevel);
-        long rows = db.insert(player.TABLE_NAME, null, values);
     }
 }

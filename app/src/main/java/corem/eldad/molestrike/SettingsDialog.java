@@ -2,8 +2,10 @@ package corem.eldad.molestrike;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceManager;
@@ -30,10 +32,12 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
     private Switch music, soundfx;
     SharedPreferences settings;
     SharedPreferences.Editor editor;
+    Music _music;
 
-    public SettingsDialog(Context context) {
+    public SettingsDialog(Context context, Music _music) {
         super(context);
         this.context = context;
+        this._music = _music;
     }
 
     @Override
@@ -62,23 +66,54 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
             public void afterTextChanged(Editable s) {
                 editor.putString("display_name", String.valueOf(editText.getText()));
                 editor.apply();
+                changeUserName(String.valueOf(editText.getText()));
             }
         });
-        music = (Switch) findViewById(R.id.music);
+        music = (Switch) findViewById(R.id.soundfx);
         music.setOnClickListener(this);
         music.setChecked(settings.getBoolean("music", true));
-        soundfx = (Switch) findViewById(R.id.soundfx);
+        soundfx = (Switch) findViewById(R.id.music);
         soundfx.setOnClickListener(this);
         soundfx.setChecked(settings.getBoolean("soundfx", true));
         musicVolume = (SeekBar) findViewById(R.id.musicSeekbar);
-        musicVolume.setOnClickListener(this);
+        musicVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                _music.setMusicVolume((0.5f * seekBar.getProgress())+50);
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                editor.putFloat("music_volume", (0.01f * musicVolume.getProgress()));
+            }
+        });
         int volume = (int) (100 * settings.getFloat("music_volume", 1));
         if (!music.isChecked())
             musicVolume.setProgress(0);
         else
             musicVolume.setProgress(volume);
         soundfxVolume = (SeekBar) findViewById(R.id.soundFXSeekbar);
-        soundfxVolume.setOnClickListener(this);
+        soundfxVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                _music.setFXRate(0.01f * seekBar.getProgress());
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                editor.putFloat("soundfx_volume", (0.01f * soundfxVolume.getProgress()));
+            }
+        });
         volume = (int) (100 * settings.getFloat("soundfx_volume", 1));
         if (!soundfx.isChecked())
             soundfxVolume.setProgress(0);
@@ -86,18 +121,43 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
             soundfxVolume.setProgress(volume);
     }
 
+    private void changeUserName(String s) {
+        MoleStrikeDB db = new MoleStrikeDB(context);
+        final SQLiteDatabase dbHelper = db.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(MoleStrikeDB.player.COLUMN_NAME, s);
+        db.updateName(s, dbHelper);
+    }
+
     @Override
     public void onClick(View v){
         editor = settings.edit();
         switch (v.getId()){
-            case R.id.music:
+            case R.id.music:{
                 editor.putBoolean("music", music.isChecked());
-            case R.id.soundfx:
+                if (music.isChecked()) {
+                    musicVolume.setProgress(50);
+                    editor.putFloat("music_volume", 0.5f);
+                    _music.run();
+                }
+                else{
+                    musicVolume.setProgress(0);
+                    editor.putFloat("music_volume", 0f);
+                    _music.pause();
+                }
+            }
+            case R.id.soundfx: {
                 editor.putBoolean("soundfx", soundfx.isChecked());
-            case R.id.musicSeekbar:
-                editor.putFloat("music_volume", (float) (0.1 * musicVolume.getProgress()));
-            case R.id.soundFXSeekbar:
-                editor.putFloat("soundfx_volume", (float) (0.1 * soundfxVolume.getProgress()));
+                if (soundfx.isChecked()) {
+                    soundfxVolume.setProgress(50);
+                    editor.putFloat("soundfx_volume", 0.5f);
+                    _music.setFXRate(0.5f);
+                }
+                else{
+                    soundfxVolume.setProgress(0);
+                    editor.putFloat("soundfx_volume", 0f);
+                }
+            }
         }
         editor.apply();
         System.out.println(settings.getFloat("music_volume", 1));

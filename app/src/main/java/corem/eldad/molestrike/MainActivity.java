@@ -1,6 +1,7 @@
 package corem.eldad.molestrike;
 
 import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -23,6 +24,7 @@ public class MainActivity extends AppCompatActivity {
     int background;
     int userLevel = 1;
     RadioButton medium, hard;
+    Music music;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,38 +32,27 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         db = new MoleStrikeDB(this);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        name = prefs.getString("display_name", "0");
         cl = (ConstraintLayout) findViewById(R.id.activity_main);
-        new Thread(new Runnable() {
+        name = prefs.getString("display_name", "Player1");
+        /*new Thread(new Runnable() {
             @Override
             public void run() {
                 togglePrefs(prefs);
             }
-        }).start();
+        }).start();*/
         new Thread(new Runnable() {
             @Override
             public void run() {
                 pullFromDB();
             }
         }).start();
-        if (firstRun)
-            createUser();
-        else
-            Toast.makeText(this, "Welcome " + name, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Welcome " + name, Toast.LENGTH_SHORT).show();
         medium = (RadioButton) findViewById(R.id.medium);
         hard = (RadioButton) findViewById(R.id.hard);
+        music = new Music(this.getBaseContext());
     }
 
-    private void createUser() {
-        final SQLiteDatabase dbHelper = db.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put(MoleStrikeDB.player.COLUMN_NAME, prefs.getString("display_name", "0"));
-        values.put(MoleStrikeDB.player.COLUMN_EMAIL, "");
-        values.put(MoleStrikeDB.player.COLUMN_LEVEL, 1);
-        values.put(MoleStrikeDB.player.COLUMN_TOP_SCORE, 0);
-        dbHelper.insert(MoleStrikeDB.player.TABLE_NAME, null, values);
-        Toast.makeText(this, "Welcome " + name, Toast.LENGTH_SHORT).show();
-    }
+
 
     @Override
     protected void onResume(){
@@ -77,42 +68,34 @@ public class MainActivity extends AppCompatActivity {
 
     private void pullFromDB(){
         SQLiteDatabase dbHelper = db.getReadableDatabase();
+        String whereClause = MoleStrikeDB.player.COLUMN_PLAYER+"=?";
+        String [] whereArgs = {"true"};
         String[] projection = {
                 MoleStrikeDB.player.COLUMN_NAME,
                 MoleStrikeDB.player.COLUMN_EMAIL,
                 MoleStrikeDB.player.COLUMN_TOP_SCORE,
-                MoleStrikeDB.player.COLUMN_LEVEL
+                MoleStrikeDB.player.COLUMN_LEVEL,
+                MoleStrikeDB.player.COLUMN_PLAYER
         };
         Cursor c = dbHelper.query(
                 MoleStrikeDB.player.TABLE_NAME,                     // The table to query
                 projection,
-                null,
-                null,
+                whereClause,
+                whereArgs,
                 null,
                 null,
                 null
         );
         c.moveToFirst();
-        if (c.getCount()==0)
-            firstRun=true;
-        else{
-            firstRun=false;
-            userLevel = c.getInt(c.getColumnIndexOrThrow(MoleStrikeDB.player.COLUMN_LEVEL));
-        }
+        userLevel = c.getInt(c.getColumnIndexOrThrow(MoleStrikeDB.player.COLUMN_LEVEL));
+        System.out.println(userLevel);
         dbHelper.close();
     }
 
     private void togglePrefs(SharedPreferences prefs) {
-        String newName = prefs.getString("display_name", "0");
-        if (!(newName.equals(name))) {
-            final SQLiteDatabase dbHelper = db.getWritableDatabase();
-            db.updateName(newName, name, dbHelper);
-            name = newName;
-            dbHelper.close();
-        }
         if (prefs.getBoolean("forestbackground", true))
             background = R.drawable.forestbackground;
-        else if (prefs.getBoolean("desertbackground", false))
+        else
             background = R.drawable.desertbackground;
 
     }
@@ -158,7 +141,18 @@ public class MainActivity extends AppCompatActivity {
     public void settingsMenu(View view) {
 //        Intent intent = new Intent(getBaseContext(), Settings.class);
 //        startActivity(intent);
-        SettingsDialog cdd=new SettingsDialog(MainActivity.this);
+        SettingsDialog cdd=new SettingsDialog(MainActivity.this, music);
+        cdd.show();
+    }
+
+    public void themesDialog(View view) {
+        ThemesDialog cdd=new ThemesDialog(MainActivity.this);
+        cdd.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+                onResume();
+            }
+        });
         cdd.show();
     }
 }

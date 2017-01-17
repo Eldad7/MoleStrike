@@ -22,6 +22,8 @@ public class ThemesDialog extends Dialog implements android.view.View.OnClickLis
     public Activity c;
     private Context context;
     private RadioButton forest, desert;
+    private SharedPreferences settings;
+    SharedPreferences.Editor editor;
 
     public ThemesDialog(Context context) {
         super(context);
@@ -30,7 +32,23 @@ public class ThemesDialog extends Dialog implements android.view.View.OnClickLis
 
     @Override
     public void onClick(View v) {
-
+        editor = settings.edit();
+        switch (v.getId()) {
+            case R.id.forest:
+                if (forest.isChecked()) {
+                    desert.setChecked(false);
+                    editor.putBoolean("desertbackground", false);
+                    editor.putBoolean("forestbackground", true);
+                }
+            case R.id.desert:
+                if (desert.isChecked()) {
+                    forest.setChecked(false);
+                    editor.putBoolean("desertbackground", true);
+                    editor.putBoolean("forestbackground", false);
+                }
+        }
+        editor.apply();
+        dismiss();
     }
 
     @Override
@@ -38,10 +56,10 @@ public class ThemesDialog extends Dialog implements android.view.View.OnClickLis
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.themes_dialog);
-        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
+        settings = PreferenceManager.getDefaultSharedPreferences(context);
         forest = (RadioButton) findViewById(R.id.forest);
-        forest.setChecked(settings.getBoolean("forestbackground", true));
+        forest.setOnClickListener(this);
         desert = (RadioButton) findViewById(R.id.desert);
-        desert.setChecked(settings.getBoolean("desertbackground", false));
+        desert.setOnClickListener(this);
     }
 }
