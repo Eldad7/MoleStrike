@@ -142,7 +142,7 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private void togglePrefs(SharedPreferences prefs) {
-        System.out.println(prefs.getBoolean("soundFX", true));
+        /*System.out.println(prefs.getBoolean("soundFX", true));
         if (prefs.getBoolean("soundFX", true)){
             System.out.println("true");
             hitSound = new Music(this.getBaseContext());
@@ -158,11 +158,13 @@ public class GameActivity extends AppCompatActivity {
         else{
             if (music.musicIsPlaying)
                 music.pause();
-        }
-        if (prefs.getString("themes", "0").equals("forestbackground"))
+        }*/
+        if (prefs.getBoolean("forestbackground", true))
             background = R.drawable.forestbackground;
-        else if (prefs.getString("themes", "0").equals("desertbackground"))
+        else
             background = R.drawable.desertbackground;
+        if (prefs.getBoolean("music", true))
+            music.run();
     }
 
     @Override

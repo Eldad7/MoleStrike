@@ -69,27 +69,35 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
                 changeUserName(String.valueOf(editText.getText()));
             }
         });
-        music = (Switch) findViewById(R.id.soundfx);
+        music = (Switch) findViewById(R.id.music);
         music.setOnClickListener(this);
         music.setChecked(settings.getBoolean("music", true));
-        soundfx = (Switch) findViewById(R.id.music);
+        soundfx = (Switch) findViewById(R.id.soundfx);
         soundfx.setOnClickListener(this);
         soundfx.setChecked(settings.getBoolean("soundfx", true));
         musicVolume = (SeekBar) findViewById(R.id.musicSeekbar);
         musicVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-
+                if (_music.musicIsPlaying) {
+                    float volume = (0.01f * seekBar.getProgress());
+                    if (volume > 0.5f)
+                        _music.setMusicVolume(volume);
+                    else{
+                        _music.setMusicVolume(0.5f);
+                    }
+                }
             }
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-                _music.setMusicVolume((0.5f * seekBar.getProgress())+50);
+
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 editor.putFloat("music_volume", (0.01f * musicVolume.getProgress()));
+                editor.apply();
             }
         });
         int volume = (int) (100 * settings.getFloat("music_volume", 1));
@@ -101,17 +109,17 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
         soundfxVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
                 _music.setFXRate(0.01f * seekBar.getProgress());
             }
 
             @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+
+            @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 editor.putFloat("soundfx_volume", (0.01f * soundfxVolume.getProgress()));
+                editor.apply();
             }
         });
         volume = (int) (100 * settings.getFloat("soundfx_volume", 1));
@@ -145,6 +153,7 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
                     editor.putFloat("music_volume", 0f);
                     _music.pause();
                 }
+                editor.apply();
             }
             case R.id.soundfx: {
                 editor.putBoolean("soundfx", soundfx.isChecked());
@@ -157,9 +166,10 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
                     soundfxVolume.setProgress(0);
                     editor.putFloat("soundfx_volume", 0f);
                 }
+                editor.apply();
             }
         }
-        editor.apply();
+
         System.out.println(settings.getFloat("music_volume", 1));
     }
 

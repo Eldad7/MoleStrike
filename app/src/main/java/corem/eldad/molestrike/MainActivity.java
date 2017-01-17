@@ -31,25 +31,20 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         db = new MoleStrikeDB(this);
+        music = new Music(this.getBaseContext());
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         cl = (ConstraintLayout) findViewById(R.id.activity_main);
         name = prefs.getString("display_name", "Player1");
-        /*new Thread(new Runnable() {
-            @Override
-            public void run() {
-                togglePrefs(prefs);
-            }
-        }).start();*/
+
         new Thread(new Runnable() {
             @Override
             public void run() {
                 pullFromDB();
             }
         }).start();
-        Toast.makeText(this, "Welcome " + name, Toast.LENGTH_SHORT).show();
         medium = (RadioButton) findViewById(R.id.medium);
         hard = (RadioButton) findViewById(R.id.hard);
-        music = new Music(this.getBaseContext());
+        Toast.makeText(this, "Welcome " + name, Toast.LENGTH_SHORT).show();
     }
 
 
@@ -62,14 +57,14 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 togglePrefs(prefs);
             }
-        }).start();
+        }).run();
         cl.setBackgroundResource(background);
     }
 
     private void pullFromDB(){
         SQLiteDatabase dbHelper = db.getReadableDatabase();
         String whereClause = MoleStrikeDB.player.COLUMN_PLAYER+"=?";
-        String [] whereArgs = {"true"};
+        String [] whereArgs = {"1"};
         String[] projection = {
                 MoleStrikeDB.player.COLUMN_NAME,
                 MoleStrikeDB.player.COLUMN_EMAIL,
@@ -88,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
         );
         c.moveToFirst();
         userLevel = c.getInt(c.getColumnIndexOrThrow(MoleStrikeDB.player.COLUMN_LEVEL));
-        System.out.println(userLevel);
+        System.out.println(c.getCount());
         dbHelper.close();
     }
 
@@ -97,12 +92,12 @@ public class MainActivity extends AppCompatActivity {
             background = R.drawable.forestbackground;
         else
             background = R.drawable.desertbackground;
+        if (prefs.getBoolean("music", true))
+            music.run();
 
     }
 
     public void chooseLevel(View view){
-        ConstraintLayout level = (ConstraintLayout) findViewById(R.id.level);
-        level.setVisibility(View.VISIBLE);
         if (userLevel==2) {
             medium.setBackgroundResource(R.drawable.medium);
             medium.setEnabled(true);
@@ -110,22 +105,21 @@ public class MainActivity extends AppCompatActivity {
             hard.setBackgroundResource(R.drawable.hard);
             hard.setEnabled(true);
         }
-
-        ImageButton button = (ImageButton) findViewById(R.id.imageButton);
-        button.setVisibility(View.GONE);
+        final LevelDialog ldd=new LevelDialog(MainActivity.this);
+        ldd.show();
+        ldd.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                play(ldd.getLevel());
+            }
+        });
     }
 
-    public void play(View view) {
-        int level = 0;
+    public void play(int level) {
         int numberOfMoles = 6;
-        System.out.println(view.getResources().getResourceName(view.getId()));
-        if (view.getResources().getResourceName(view.getId()).equals("corem.eldad.molestrike:id/easy")) {
-            level = R.id.activity_game;
-            numberOfMoles = 6;
-        }
-        else if(view.getResources().getResourceName(view.getId()).equals("corem.eldad.molestrike:id/medium")) {
-            level = R.id.activity_game_medium;
-            numberOfMoles = 9;
+        switch (level){
+            case 1:break;
+            case 2:numberOfMoles = 9;
         }
         System.out.println(level);
         Intent intent = new Intent(getBaseContext(), GameActivity.class);

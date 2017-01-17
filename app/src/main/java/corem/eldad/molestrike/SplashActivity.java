@@ -19,7 +19,8 @@ public class SplashActivity extends Activity {
         super.onCreate(savedInstanceState);
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = settings.edit();
-        if(!settings.getBoolean("active", true)) {
+        if(!(settings.getBoolean("active", false))) {
+            System.out.println("in here");
             editor.putBoolean("active", true);
             editor.putBoolean("forestbackground", true);
             editor.putBoolean("desertbackground", false);
@@ -52,7 +53,7 @@ public class SplashActivity extends Activity {
         values.put(MoleStrikeDB.player.COLUMN_EMAIL, "");
         values.put(MoleStrikeDB.player.COLUMN_LEVEL, 1);
         values.put(MoleStrikeDB.player.COLUMN_TOP_SCORE, 0);
-        values.put(MoleStrikeDB.player.COLUMN_PLAYER, "true");
+        values.put(MoleStrikeDB.player.COLUMN_PLAYER, 1);
         dbHelper.insert(MoleStrikeDB.player.TABLE_NAME, null, values);
         for (int i=0; i<10; i++){
             values.put(MoleStrikeDB.player.COLUMN_NAME, names[i]);
@@ -64,7 +65,7 @@ public class SplashActivity extends Activity {
             else
                 values.put(MoleStrikeDB.player.COLUMN_LEVEL, 3);
             values.put(MoleStrikeDB.player.COLUMN_TOP_SCORE, (i+1)*10);
-            values.put(MoleStrikeDB.player.COLUMN_PLAYER, "false");
+            values.put(MoleStrikeDB.player.COLUMN_PLAYER, 0);
             dbHelper.insert(MoleStrikeDB.player.TABLE_NAME, null, values);
         }
 

@@ -2,16 +2,16 @@
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="250dp"
-    android:layout_height="150dp"
+    android:layout_width="450dp"
+    android:layout_height="250dp"
     android:background="#303030"
     android:orientation="horizontal">
 
 
     <RadioButton
         android:background="@drawable/forestbackground"
-        android:layout_width="100dp"
-        android:layout_height="80dp"
+        android:layout_width="200dp"
+        android:layout_height="180dp"
         android:id="@+id/forest"
         app:layout_constraintBottom_toBottomOf="parent"
         android:layout_marginBottom="16dp"
@@ -29,9 +29,9 @@
 
     <RadioButton
         android:background="@drawable/desertbackground"
-        android:layout_width="100dp"
+        android:layout_width="200dp"
         android:id="@+id/desert"
-        android:layout_height="80dp"
+        android:layout_height="180dp"
         android:layout_marginEnd="16dp"
         app:layout_constraintRight_toRightOf="parent"
         android:layout_marginRight="16dp"

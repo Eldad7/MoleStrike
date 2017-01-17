@@ -55,7 +55,7 @@ public class Music implements Runnable, MediaPlayer.OnCompletionListener,Seriali
         mPlayer.stop();
     }
 
-
+    public boolean getMusicIsPlaying(){ return musicIsPlaying;}
 
     @Override
     public void run() {
