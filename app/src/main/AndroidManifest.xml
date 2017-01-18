@@ -25,10 +25,7 @@
         <activity
             android:name=".GameActivity"
             android:screenOrientation="landscape" />
-        <activity
-            android:name=".Settings"
-            android:screenOrientation="landscape"
-            android:theme="@style/AppTheme" />
+        <activity android:name=".GameOverActivity"></activity>
     </application>
 
 </manifest>

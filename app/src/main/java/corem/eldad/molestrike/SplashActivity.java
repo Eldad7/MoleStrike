@@ -20,7 +20,6 @@ public class SplashActivity extends Activity {
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = settings.edit();
         if(!(settings.getBoolean("active", false))) {
-            System.out.println("in here");
             editor.putBoolean("active", true);
             editor.putBoolean("forestbackground", true);
             editor.putBoolean("desertbackground", false);

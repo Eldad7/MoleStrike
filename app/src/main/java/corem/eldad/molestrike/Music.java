@@ -26,12 +26,16 @@ public class Music implements Runnable, MediaPlayer.OnCompletionListener {
 
     public Music(Context context, Activity activity) {
         soundPool = new SoundPool(2, AudioManager.STREAM_MUSIC, 0);
-        hitSound = soundPool.load(context, R.raw.hit,1);
         appContext = context;
         this.activity = activity;
+        hitSound = soundPool.load(appContext, R.raw.hit,1);
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
         musicVolume = settings.getFloat("music_volume", 1.0f);
         volumeLevel = settings.getFloat("soundfx_volume", 1.0f);
+    }
+
+    public void loadHit(){
+        hitSound = soundPool.load(appContext, R.raw.hit,1);
     }
 
     public void setFXRate(float rate){
@@ -55,9 +59,11 @@ public class Music implements Runnable, MediaPlayer.OnCompletionListener {
 
     public void pause(){
         mPlayer.stop();
+        setMusicIsPlaying(false);
     }
 
     public boolean getMusicIsPlaying(){ return musicIsPlaying;}
+    public void setMusicIsPlaying(boolean _musicIsPlaying){musicIsPlaying = _musicIsPlaying;}
 
     @Override
     public void run() {
@@ -66,10 +72,10 @@ public class Music implements Runnable, MediaPlayer.OnCompletionListener {
             musicIsPlaying = false;
         } else {
             if (mPlayer == null) {
-                if (activity.getClass() == MainActivity.class)
-                    mPlayer = MediaPlayer.create(appContext, R.raw.main_music);
-                else
+                if (activity.getClass() == GameActivity.class)
                     mPlayer = MediaPlayer.create(appContext, R.raw.game_music);
+                else
+                    mPlayer = MediaPlayer.create(appContext, R.raw.main_music);
                 mPlayer.setLooping(true);
                 mPlayer.start();
                 mPlayer.setOnCompletionListener(this); // MediaPlayer.OnCompletionListener

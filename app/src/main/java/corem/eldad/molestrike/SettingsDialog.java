@@ -80,11 +80,11 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
                 if (_music.musicIsPlaying) {
                     float volume = (0.01f * seekBar.getProgress());
-                    if (volume > 0.5f)
-                        _music.setMusicVolume(volume);
-                    else{
-                        _music.setMusicVolume(0.5f);
-                    }
+                    _music.setMusicVolume(volume);
+                }
+                if (seekBar.getProgress()==0) {
+                    editor.putBoolean("music", false);
+                    editor.apply();
                 }
             }
 
@@ -97,11 +97,15 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
             public void onStopTrackingTouch(SeekBar seekBar) {
                 editor.putFloat("music_volume", (0.01f * musicVolume.getProgress()));
                 editor.apply();
+                music.setChecked(false);
             }
         });
         int volume = (int) (100 * settings.getFloat("music_volume", 1));
-        if (!music.isChecked())
+        if (!music.isChecked()) {
             musicVolume.setProgress(0);
+            musicVolume.setFocusable(false);
+            musicVolume.setEnabled(false);
+        }
         else
             musicVolume.setProgress(volume);
         soundfxVolume = (SeekBar) findViewById(R.id.soundFXSeekbar);
@@ -109,6 +113,11 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
                 _music.setFXRate(0.01f * seekBar.getProgress());
+                if (seekBar.getProgress()==0) {
+                    editor.putBoolean("soundfx", false);
+                    editor.apply();
+                    soundfx.setChecked(false);
+                }
             }
 
             @Override
@@ -122,8 +131,11 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
             }
         });
         volume = (int) (100 * settings.getFloat("soundfx_volume", 1));
-        if (!soundfx.isChecked())
+        if (!soundfx.isChecked()) {
             soundfxVolume.setProgress(0);
+            soundfxVolume.setFocusable(false);
+            soundfxVolume.setEnabled(false);
+        }
         else
             soundfxVolume.setProgress(volume);
     }
@@ -150,6 +162,8 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
             case R.id.music:{
                 editor.putBoolean("music", music.isChecked());
                 if (music.isChecked()) {
+                    musicVolume.setFocusable(true);
+                    musicVolume.setEnabled(true);
                     musicVolume.setProgress(50);
                     editor.putFloat("music_volume", 0.5f);
                     _music.run();
@@ -158,6 +172,8 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
                     musicVolume.setProgress(0);
                     editor.putFloat("music_volume", 0f);
                     _music.pause();
+                    musicVolume.setFocusable(false);
+                    musicVolume.setEnabled(false);
                 }
                 editor.apply();
                 break;
@@ -168,10 +184,15 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
                     soundfxVolume.setProgress(50);
                     editor.putFloat("soundfx_volume", 0.5f);
                     _music.setFXRate(0.5f);
+                    soundfxVolume.setFocusable(true);
+                    soundfxVolume.setEnabled(true);
                 }
                 else{
                     soundfxVolume.setProgress(0);
                     editor.putFloat("soundfx_volume", 0f);
+
+                    soundfxVolume.setFocusable(false);
+                    soundfxVolume.setEnabled(false);
                 }
                 editor.apply();
                 break;

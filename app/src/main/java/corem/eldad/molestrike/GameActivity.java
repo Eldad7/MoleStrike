@@ -1,6 +1,5 @@
 package corem.eldad.molestrike;
 
-import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -23,21 +22,24 @@ import android.widget.TextView;
  */
 
 public class GameActivity extends AppCompatActivity {
-    ImageView current;
+    ImageView current, devil, angel;
     ImageView[] characters;
-    long timer;
-    static boolean lose;
+    long timer, devilTimer,angelTimer;
+    static boolean lose=false;
     Timer counter;
+    DevilTimer dcounter;
+    AngelTimer acounter;
     int j=0,numberOfMoles, background, top=0;
     ImageView countDownView, pausePlay;
     TextView count, topScore;
     AnimationDrawable moleAnimation;
-    boolean started, resumed = false, firstTime = true, hitSound;
+    boolean started, resumed = false, firstTime = true, devilFirstTime = true, angelFirstTime = true, hitSound;
     private Music music;
     CountDownTimer countDown;
     private SharedPreferences prefs;
     ConstraintLayout cl;
     MoleStrikeDB db;
+    int level;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,8 +60,7 @@ public class GameActivity extends AppCompatActivity {
         countDownView = (ImageView) findViewById(R.id.countDownView);
         for (int i=0; i<numberOfMoles; i++)
             characters[i].setBackgroundResource(R.drawable.jmole1);
-        timer=2500;
-        lose = false;
+        devilTimer=angelTimer=timer=2500;
         final int three = R.drawable.number3;
         final int two = R.drawable.number2;
         final int one = R.drawable.number1;
@@ -88,13 +89,22 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private void setTopScore(){
+        boolean newHigh = false;
+        boolean newLevel = false;
+        if (lose) {
+            try {
+                dcounter.cancel();
+                acounter.cancel();
+                counter.cancel();
+            } catch (NullPointerException ignored){
+
+            }
+        }
         SQLiteDatabase dbHelper = db.getWritableDatabase();
         if ((j==top) && (j==0)) {
             String whereClause = MoleStrikeDB.player.COLUMN_PLAYER + "=?";
             String[] whereArgs = {"1"};
             String[] projection = {
-                    MoleStrikeDB.player.COLUMN_NAME,
-                    MoleStrikeDB.player.COLUMN_EMAIL,
                     MoleStrikeDB.player.COLUMN_TOP_SCORE,
                     MoleStrikeDB.player.COLUMN_LEVEL,
                     MoleStrikeDB.player.COLUMN_PLAYER
@@ -110,21 +120,39 @@ public class GameActivity extends AppCompatActivity {
             );
             c.moveToFirst();
             top = c.getInt(c.getColumnIndexOrThrow(MoleStrikeDB.player.COLUMN_TOP_SCORE));
-            System.out.println("top - " + top);
+            level = c.getInt(c.getColumnIndexOrThrow(MoleStrikeDB.player.COLUMN_LEVEL));
         }
         else if (j>top){
+            newHigh = true;
             db.updateTopScore(prefs.getString("display_name", "Player1"), j, dbHelper);
             if ((j < 80) && (j > 29))
-                db.updateLevel(prefs.getString("display_name", "Player1"), 2, dbHelper);
+                if (level<2) {
+                    db.updateLevel(prefs.getString("display_name", "Player1"), 2, dbHelper);
+                    newLevel = true;
+                }
             else if (j>79)
-                db.updateLevel(prefs.getString("display_name", "Player1"), 3, dbHelper);
-            else
-                db.updateLevel(prefs.getString("display_name", "Player1"), 1, dbHelper);
+                    if (level<3) {
+                        db.updateLevel(prefs.getString("display_name", "Player1"), 3, dbHelper);
+                        newLevel = true;
+                    }
             top=j;
         }
         dbHelper.close();
         topScore = (TextView) findViewById(R.id.topScore);
         topScore.setText("Top: " + String.valueOf(top));
+        if (lose){
+            Intent intent = new Intent(getBaseContext(), GameOverActivity.class);
+            Bundle bundle = new Bundle();
+            bundle.putInt("numberOfMoles", numberOfMoles);
+            bundle.putBoolean("highScore", newHigh);
+            bundle.putBoolean("newLevel",newLevel);
+            intent.putExtras(bundle);
+            startActivity(intent);
+            if (music.getMusicIsPlaying())
+                music.pause();
+            finish();
+        }
+
     }
 
     private void initViews(int moles) {
@@ -203,60 +231,162 @@ public class GameActivity extends AppCompatActivity {
         int random = (int )(Math.random() * 500);
         if (!lose) {
             current = characters[random % numberOfMoles];
+            while ((devil == current) || (current==angel))
+                current = characters[random % numberOfMoles];
             current.setBackgroundResource(R.drawable.goingup);
-            startTransition(current);
+            startTransition(current, 1);
         }
     }
 
-    private void startTransition(ImageView current) {
+    private void devilPlay(){
+        int random = (int )(Math.random() * 500);
+        if (!lose) {
+            devil = characters[random % numberOfMoles];
+            while ((devil == current) || (devil==angel))
+                devil = characters[random % numberOfMoles];
+            devil.setBackgroundResource(R.drawable.goingupdevil);
+            startTransition(devil, 2);
+        }
+    }
+
+    private void AngelPlay(){
+        int random = (int )(Math.random() * 500);
+        if (!lose) {
+            angel = characters[random % numberOfMoles];
+            while ((angel == current) || (devil==angel))
+                angel = characters[random % numberOfMoles];
+            angel.setBackgroundResource(R.drawable.goingupangel);
+            startTransition(angel, 3);
+        }
+    }
+
+    private void startTransition(ImageView current, int type) {
         System.out.println("Transitioning");
         moleAnimation = (AnimationDrawable) current.getBackground();
         moleAnimation.start();
-        current.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if (started) {
-                    if ((event.getAction() == MotionEvent.ACTION_DOWN) && (hitSound!=false))
-                        music.playHit();
-                    if (event.getAction() == MotionEvent.ACTION_UP)
-                        GameOn(counter);
-                    return true;
-                }
-                return false;
+        switch (type){
+            case 1: {
+                System.out.println("Case 1");
+                current.setOnTouchListener(new View.OnTouchListener() {
+                    @Override
+                    public boolean onTouch(View v, MotionEvent event) {
+                        if (started) {
+                            if ((event.getAction() == MotionEvent.ACTION_DOWN) && (hitSound))
+                                music.playHit();
+                            if (event.getAction() == MotionEvent.ACTION_UP)
+                                GameOn(1);
+                            return true;
+                        }
+                        return false;
+                    }
+                });
+                if (firstTime) {
+                    firstTime = false;
+                    counter = new Timer(timer, 1000);
+
+                } else
+                    counter.setMillisInFuture(timer);
+                counter.setClicked(false);
+                counter.start();
+                break;
             }
-        });
-        if (firstTime) {
-            firstTime = false;
-            counter = new Timer(timer, 1000);
-            counter.start();
+            case 2: {
+                current.setOnTouchListener(new View.OnTouchListener() {
+                    @Override
+                    public boolean onTouch(View v, MotionEvent event) {
+                        if (started) {
+                            if ((event.getAction() == MotionEvent.ACTION_DOWN) && (hitSound))
+                                music.playHit();
+                            if (event.getAction() == MotionEvent.ACTION_UP)
+                                GameOn(2);
+                            return true;
+                        }
+                        return false;
+                    }
+                });
+                if (firstTime) {
+                    firstTime = false;
+                    dcounter = new DevilTimer(timer, 1000);
+                    dcounter.resetHits();
+                } else {
+                    dcounter.setMillisInFuture(timer);
+                }
+                dcounter.start();
+                break;
+            }
+            case 3:{
+                current.setOnTouchListener(new View.OnTouchListener() {
+                    @Override
+                    public boolean onTouch(View v, MotionEvent event) {
+                        if (started) {
+                            if ((event.getAction() == MotionEvent.ACTION_DOWN) && (hitSound))
+                                music.playHit();
+                            if (event.getAction() == MotionEvent.ACTION_UP)
+                                GameOn(3);
+                            return true;
+                        }
+                        return false;
+                    }
+                });
+                if (firstTime) {
+                    firstTime = false;
+                    acounter = new AngelTimer(timer, 1000);
+                } else
+                    acounter.setMillisInFuture(timer);
+                acounter.start();
+                break;
+            }
         }
-        else{
-            System.out.println(timer);
-            counter.setMillisInFuture(timer);
-            counter.start();
-        }
-            counter.setClicked(false);
     }
 
-    private void GameOn(Timer counter) {
-        if (!counter.getClicked()) {
-            System.out.println("Lose = " + String.valueOf(lose));
-            current.setImageResource(R.drawable.pow);
-            current.setBackgroundResource(R.drawable.goingdown);
-            current.setOnTouchListener(null);
-            moleAnimation = (AnimationDrawable) current.getBackground();
-            moleAnimation.start();
-            if ((timer > 800) && (j%3==0))
-                timer -= 100;
-            counter.setClicked(true);
-            count.setText("Score: " + String.valueOf(++j));
+    private void GameOn(int type) {
+        switch (type){
+            case 1: {
+                if (!counter.getClicked()) {
+                    current.setImageResource(R.drawable.pow);
+                    current.setBackgroundResource(R.drawable.goingdown);
+                    current.setOnTouchListener(null);
+                    moleAnimation = (AnimationDrawable) current.getBackground();
+                    moleAnimation.start();
+                    if ((timer > 800) && (j % 3 == 0))
+                        timer -= 100;
+                    counter.setClicked(true);
+                    count.setText("Score: " + String.valueOf(++j));
+                }
+            }
+                break;
+            case 2: {
+                if (dcounter.getClicked()) {
+                    devil.setImageResource(R.drawable.pow);
+                    devil.setBackgroundResource(R.drawable.goingdowndevil);
+                    devil.setOnTouchListener(null);
+                    moleAnimation = (AnimationDrawable) devil.getBackground();
+                    moleAnimation.start();
+                    if (devilTimer > 800)
+                        devilTimer -= 100;
+                } else {
+                    dcounter.setClicked();
+                }
+                count.setText("Score: " + String.valueOf(++j+4));
+                break;
+            }
+            case 3:
+                if (!acounter.getClicked()) {
+                    angel.setBackgroundResource(R.drawable.goingdownangel);
+                    angel.setOnTouchListener(null);
+                    moleAnimation = (AnimationDrawable) angel.getBackground();
+                    moleAnimation.start();
+                    acounter.setClicked(true);
+                }
+                break;
+        }
             if (j>top)
                 topScore.setText("New top!");
-        }
+            if (hitSound)
+                music.loadHit();
     }
 
     public void pause(View view) {
-        pausePlay.setBackgroundResource(R.drawable.play);
         resumed = true;
         if (current != null)
             current.setOnTouchListener(null);
@@ -306,6 +436,7 @@ public class GameActivity extends AppCompatActivity {
         }
         public void onFinish() {
             if ((!clicked) && (!resumed)) {
+                System.out.println("Lose");
                 lose = true;
                 setClicked(true);
                 current.setBackgroundResource(R.drawable.goingdown);
@@ -319,6 +450,109 @@ public class GameActivity extends AppCompatActivity {
             }
             else{
                 current.setImageResource(android.R.color.transparent);
+                System.out.println("Still playing");
+                play();
+            }
+            finished = true;
+        }
+    }
+
+    private class DevilTimer extends MyCountDownTimer {
+        boolean clicked = false;
+        boolean finished = false;
+        long mMillisInFuture;
+        int hits=0;
+
+        DevilTimer(long millisInFuture, long countDownInterval) {
+            super(millisInFuture, countDownInterval);
+            mMillisInFuture = millisInFuture;
+        }
+
+        public void setMillisInFuture(long millisInFuture) {
+            super.setMillisInFuture(millisInFuture);
+            mMillisInFuture = millisInFuture;
+        }
+
+        void setClicked(){
+            if (++hits==3)
+                this.clicked = true;
+        }
+
+        boolean getClicked(){
+            return clicked;
+        }
+
+        public void onTick(long millisUntilFinished) {
+
+        }
+        public void onFinish() {
+            if ((!clicked) && (!resumed)) {
+                lose = true;
+                hits=3;
+                setClicked();
+                devil.setBackgroundResource(R.drawable.goingdowndevil);
+                moleAnimation = (AnimationDrawable) devil.getBackground();
+                moleAnimation.start();
+                countDownView.setImageResource(R.drawable.gameover);
+                countDownView.setVisibility(View.VISIBLE);
+                devil.setImageResource(android.R.color.transparent);
+                devil.setOnTouchListener(null);
+                setTopScore();
+            }
+            else{
+                devil.setImageResource(android.R.color.transparent);
+                play();
+            }
+            finished = true;
+        }
+
+        public void resetHits() {
+            this.hits=0;
+        }
+    }
+
+    private class AngelTimer extends MyCountDownTimer {
+        boolean clicked = false;
+        boolean finished = false;
+        long mMillisInFuture;
+
+        AngelTimer(long millisInFuture, long countDownInterval) {
+            super(millisInFuture, countDownInterval);
+            mMillisInFuture = millisInFuture;
+        }
+
+        public void setMillisInFuture(long millisInFuture) {
+            super.setMillisInFuture(millisInFuture);
+            mMillisInFuture = millisInFuture;
+        }
+
+        void setClicked(boolean clicked){
+            System.out.println("Clicked = "+clicked);
+            this.clicked = clicked;
+        }
+
+        boolean getClicked(){
+            return clicked;
+        }
+
+        public void onTick(long millisUntilFinished) {
+
+        }
+        public void onFinish() {
+            if ((clicked) && (!resumed)) {
+                lose = true;
+                setClicked(true);
+                angel.setBackgroundResource(R.drawable.goingdownangel);
+                moleAnimation = (AnimationDrawable) angel.getBackground();
+                moleAnimation.start();
+                countDownView.setImageResource(R.drawable.gameover);
+                countDownView.setVisibility(View.VISIBLE);
+                angel.setImageResource(android.R.color.transparent);
+                angel.setOnTouchListener(null);
+                setTopScore();
+            }
+            else{
+                angel.setImageResource(android.R.color.transparent);
                 play();
             }
             finished = true;

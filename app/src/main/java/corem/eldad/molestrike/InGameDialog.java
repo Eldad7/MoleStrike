@@ -76,12 +76,13 @@ public class InGameDialog extends Dialog implements android.view.View.OnClickLis
             case R.id.musicInGame:{
                 editor.putBoolean("music", music.isChecked());
                 if (music.isChecked()) {
-                    v.startAnimation(AnimationUtils.loadAnimation(context, R.anim.imageclick_ontooff));
+                    v.startAnimation(AnimationUtils.loadAnimation(context, R.anim.imageclick));
                     _music.run();
+                    editor.putFloat("music_volume", 0.5f);
                     v.setBackgroundResource(R.drawable.music);
                 }
                 else{
-                    v.startAnimation(AnimationUtils.loadAnimation(context, R.anim.imageclick_offtoon));
+                    v.startAnimation(AnimationUtils.loadAnimation(context, R.anim.imageclick));
                     editor.putFloat("music_volume", 0f);
                     _music.pause();
                     v.setBackgroundResource(R.drawable.musicdisabled);
@@ -92,12 +93,14 @@ public class InGameDialog extends Dialog implements android.view.View.OnClickLis
             case R.id.soundfxInGame: {
                 editor.putBoolean("soundfx", soundfx.isChecked());
                 if (soundfx.isChecked()) {
-                    v.startAnimation(AnimationUtils.loadAnimation(context, R.anim.imageclick_ontooff));
+                    v.startAnimation(AnimationUtils.loadAnimation(context, R.anim.imageclick));
                     _music.setFXVolume(0.5f);
+                    editor.putFloat("soundfx_volume", 0.5f);
+                    _music.loadHit();
                     v.setBackgroundResource(R.drawable.soundfx);
                 }
                 else{
-                    v.startAnimation(AnimationUtils.loadAnimation(context, R.anim.imageclick_offtoon));
+                    v.startAnimation(AnimationUtils.loadAnimation(context, R.anim.imageclick));
                     editor.putFloat("soundfx_volume", 0f);
                     v.setBackgroundResource(R.drawable.soundfxdisabled);
                 }

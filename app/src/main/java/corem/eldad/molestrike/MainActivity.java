@@ -1,6 +1,6 @@
 package corem.eldad.molestrike;
 
-import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -11,14 +11,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.preference.PreferenceManager;
 import android.view.View;
-import android.widget.ImageButton;
+import android.view.animation.AnimationUtils;
+import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
     MoleStrikeDB db;
     private SharedPreferences prefs;
-    boolean firstRun;
     String name;
     ConstraintLayout cl;
     int background;
@@ -35,7 +35,6 @@ public class MainActivity extends AppCompatActivity {
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         cl = (ConstraintLayout) findViewById(R.id.activity_main);
         name = prefs.getString("display_name", "Player1");
-
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -44,14 +43,17 @@ public class MainActivity extends AppCompatActivity {
         }).start();
         medium = (RadioButton) findViewById(R.id.medium);
         hard = (RadioButton) findViewById(R.id.hard);
-        Toast.makeText(this, "Welcome " + name, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Hello " + name, Toast.LENGTH_SHORT).show();
     }
-
-
 
     @Override
     protected void onResume(){
         super.onResume();
+        Intent intent = getIntent();
+        if (intent.hasExtra("newLevel")) {
+            //gameOver();
+            return;
+        }
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -60,6 +62,46 @@ public class MainActivity extends AppCompatActivity {
         }).run();
         cl.setBackgroundResource(background);
     }
+
+    /*private void gameOver() {
+        setContentView(R.layout.activity_game_over);
+        Intent intent = getIntent();
+        Bundle b=intent.getExtras();
+        final boolean level = b.getBoolean("newLevel");
+        final boolean newHighScore = b.getBoolean("highScore");
+        final ImageView highScore = (ImageView) findViewById(R.id.highScore);
+        final ImageView newLevel = (ImageView) findViewById(R.id.newLevel);
+        final Context context = this;
+        cl = (ConstraintLayout) findViewById(R.id.activity_game_over);
+        togglePrefs(prefs);
+        cl.setBackgroundResource(background);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                if (newHighScore) {
+                    highScore.setVisibility(View.VISIBLE);
+                    highScore.startAnimation(AnimationUtils.loadAnimation(context, R.anim.imageclick));
+                    try {
+                        Thread.sleep(3000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (level){
+                    newLevel.setVisibility(View.VISIBLE);
+                    newLevel.startAnimation(AnimationUtils.loadAnimation(context, R.anim.imageclick));
+                }
+            }
+        }).start();
+    }
+*/
+    /*@Override
+    public void onBackPressed(){
+        setContentView(R.layout.activity_main);
+        togglePrefs(prefs);
+        cl = (ConstraintLayout) findViewById(R.layout.activity_main);
+        cl.setBackgroundResource(background);
+    }*/
 
     private void pullFromDB(){
         SQLiteDatabase dbHelper = db.getReadableDatabase();
@@ -93,8 +135,10 @@ public class MainActivity extends AppCompatActivity {
         else
             background = R.drawable.desertbackground;
         if (prefs.getBoolean("music", true))
-            music.run();
-
+            if (!music.getMusicIsPlaying()){
+                music.run();
+                System.out.println("Play");
+            }
     }
 
     public void chooseLevel(View view){
@@ -110,7 +154,8 @@ public class MainActivity extends AppCompatActivity {
         ldd.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialog) {
-                play(ldd.getLevel());
+                if (ldd.levelChosen)
+                    play(ldd.getLevel());
             }
         });
     }
@@ -126,9 +171,7 @@ public class MainActivity extends AppCompatActivity {
             music.pause();
         Intent intent = new Intent(getBaseContext(), GameActivity.class);
         Bundle bundle = new Bundle();
-        bundle.putInt("level", level);
         bundle.putInt("numberOfMoles", numberOfMoles);
-        bundle.putInt("background", background);
         intent.putExtras(bundle);
         startActivity(intent);
     }

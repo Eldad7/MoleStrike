@@ -19,12 +19,16 @@ public class LevelDialog extends Dialog implements android.view.View.OnClickList
 
     private Context context;
     private RadioButton easy, medium, hard;
-
+    boolean levelChosen = false;
     int level;
 
     public LevelDialog(Context context) {
         super(context);
         this.context = context;
+    }
+
+    public boolean getLevelChosen(){
+        return levelChosen;
     }
 
     public int getLevel(){
@@ -41,6 +45,7 @@ public class LevelDialog extends Dialog implements android.view.View.OnClickList
             default: level=1;
 
         }
+        levelChosen = true;
         dismiss();
     }
 
