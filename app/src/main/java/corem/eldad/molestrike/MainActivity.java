@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         db = new MoleStrikeDB(this);
-        music = new Music(this.getBaseContext());
+        music = new Music(this.getBaseContext(), this);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         cl = (ConstraintLayout) findViewById(R.id.activity_main);
         name = prefs.getString("display_name", "Player1");
@@ -122,9 +122,10 @@ public class MainActivity extends AppCompatActivity {
             case 2:numberOfMoles = 9;
         }
         System.out.println(level);
+        if (music.getMusicIsPlaying())
+            music.pause();
         Intent intent = new Intent(getBaseContext(), GameActivity.class);
         Bundle bundle = new Bundle();
-        //bundle.putSerializable("music", sounds);
         bundle.putInt("level", level);
         bundle.putInt("numberOfMoles", numberOfMoles);
         bundle.putInt("background", background);
@@ -133,8 +134,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void settingsMenu(View view) {
-//        Intent intent = new Intent(getBaseContext(), Settings.class);
-//        startActivity(intent);
         SettingsDialog cdd=new SettingsDialog(MainActivity.this, music);
         cdd.show();
     }
@@ -147,6 +146,11 @@ public class MainActivity extends AppCompatActivity {
                 onResume();
             }
         });
+        cdd.show();
+    }
+
+    public void about(View view) {
+        InfoDialog cdd=new InfoDialog(MainActivity.this);
         cdd.show();
     }
 }

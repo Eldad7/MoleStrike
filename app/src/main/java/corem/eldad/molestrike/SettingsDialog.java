@@ -33,6 +33,7 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
     SharedPreferences settings;
     SharedPreferences.Editor editor;
     Music _music;
+    String newName = null;
 
     public SettingsDialog(Context context, Music _music) {
         super(context);
@@ -53,20 +54,18 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
         editText.setText(name);
         editText.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
 
             }
 
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
 
             }
 
             @Override
-            public void afterTextChanged(Editable s) {
-                editor.putString("display_name", String.valueOf(editText.getText()));
-                editor.apply();
-                changeUserName(String.valueOf(editText.getText()));
+            public void afterTextChanged(Editable editable) {
+                newName = String.valueOf(editText.getText());
             }
         });
         music = (Switch) findViewById(R.id.music);
@@ -129,12 +128,19 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
             soundfxVolume.setProgress(volume);
     }
 
-    private void changeUserName(String s) {
+    @Override
+    public void onDetachedFromWindow(){
+        if (newName != null) {
+            editor.putString("display_name", String.valueOf(editText.getText()));
+            editor.apply();
+            changeUserName(String.valueOf(editText.getText()));
+        }
+    }
+
+    private void changeUserName(String name) {
         MoleStrikeDB db = new MoleStrikeDB(context);
         final SQLiteDatabase dbHelper = db.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put(MoleStrikeDB.player.COLUMN_NAME, s);
-        db.updateName(s, dbHelper);
+        db.updateName(name, dbHelper);
     }
 
     @Override
@@ -154,6 +160,7 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
                     _music.pause();
                 }
                 editor.apply();
+                break;
             }
             case R.id.soundfx: {
                 editor.putBoolean("soundfx", soundfx.isChecked());
@@ -167,29 +174,10 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
                     editor.putFloat("soundfx_volume", 0f);
                 }
                 editor.apply();
+                break;
             }
         }
 
         System.out.println(settings.getFloat("music_volume", 1));
     }
-
-    private static Preference.OnPreferenceChangeListener
-            sPreferenceChangeListener = new Preference.OnPreferenceChangeListener() {
-        @Override
-        public boolean onPreferenceChange(Preference preference, Object value) {
-            String stringValue = value.toString();
-            preference.setSummary(stringValue);
-            return true;
-        }
-    };
-
-//    private void initPref(String prefKey) {
-//        //Preference preference = findPreference(prefKey);
-//        SharedPreferences preference = this.getContext().getSharedPreferences("my_preferences", Context.MODE_PRIVATE);
-//        preference.setOnPreferenceChangeListener(sPreferenceChangeListener);
-//        sPreferenceChangeListener.onPreferenceChange(preference,
-//                PreferenceManager.getDefaultSharedPreferences(preference.getContext())
-//                        .getString(preference.getKey(), "(not set yet)"));
-//
-//    }
 }

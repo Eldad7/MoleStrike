@@ -1,21 +1,21 @@
 package corem.eldad.molestrike;
 
+import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import java.lang.reflect.Field;
 
 
 /**
@@ -23,54 +23,39 @@ import java.lang.reflect.Field;
  */
 
 public class GameActivity extends AppCompatActivity {
-    /*ImageView topLeft;
-    ImageView topMiddle;
-    ImageView topRight;
-    ImageView bottomLeft;
-    ImageView bottomMiddle;
-    ImageView bottomRight;*/
     ImageView current;
     ImageView[] characters;
     long timer;
     static boolean lose;
-    boolean firstTime = true;
     Timer counter;
-    int j,numberOfMoles;
+    int j=0,numberOfMoles, background, top=0;
     ImageView countDownView, pausePlay;
-    TextView count;
+    TextView count, topScore;
     AnimationDrawable moleAnimation;
-    boolean started;
-    boolean resumed = false;
-    private Music hitSound, music;
+    boolean started, resumed = false, firstTime = true, hitSound;
+    private Music music;
     CountDownTimer countDown;
     private SharedPreferences prefs;
-    int background;
     ConstraintLayout cl;
+    MoleStrikeDB db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        music = new Music(this.getBaseContext());
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                togglePrefs(prefs);
-            }
-        }).start();
+        db = new MoleStrikeDB(this);
+        music = new Music(this.getBaseContext(), this);
         setContentView(R.layout.activity_game);
         cl = (ConstraintLayout) findViewById(R.id.activity_game);
         Intent intent = getIntent();
         Bundle b=intent.getExtras();
-//        music = (Music) intent.getSerializableExtra("music");
         numberOfMoles = b.getInt("numberOfMoles");
+        setTopScore();
         initViews(numberOfMoles);
         pausePlay = (ImageView) findViewById(R.id.pause);
-        j=0;
         count = (TextView) findViewById(R.id.count);
         count.setText("Score: " + String.valueOf(j));
         countDownView = (ImageView) findViewById(R.id.countDownView);
-
         for (int i=0; i<numberOfMoles; i++)
             characters[i].setBackgroundResource(R.drawable.jmole1);
         timer=2500;
@@ -102,6 +87,46 @@ public class GameActivity extends AppCompatActivity {
         }.start();
     }
 
+    private void setTopScore(){
+        SQLiteDatabase dbHelper = db.getWritableDatabase();
+        if ((j==top) && (j==0)) {
+            String whereClause = MoleStrikeDB.player.COLUMN_PLAYER + "=?";
+            String[] whereArgs = {"1"};
+            String[] projection = {
+                    MoleStrikeDB.player.COLUMN_NAME,
+                    MoleStrikeDB.player.COLUMN_EMAIL,
+                    MoleStrikeDB.player.COLUMN_TOP_SCORE,
+                    MoleStrikeDB.player.COLUMN_LEVEL,
+                    MoleStrikeDB.player.COLUMN_PLAYER
+            };
+            Cursor c = dbHelper.query(
+                    MoleStrikeDB.player.TABLE_NAME,                     // The table to query
+                    projection,
+                    whereClause,
+                    whereArgs,
+                    null,
+                    null,
+                    null
+            );
+            c.moveToFirst();
+            top = c.getInt(c.getColumnIndexOrThrow(MoleStrikeDB.player.COLUMN_TOP_SCORE));
+            System.out.println("top - " + top);
+        }
+        else if (j>top){
+            db.updateTopScore(prefs.getString("display_name", "Player1"), j, dbHelper);
+            if ((j < 80) && (j > 29))
+                db.updateLevel(prefs.getString("display_name", "Player1"), 2, dbHelper);
+            else if (j>79)
+                db.updateLevel(prefs.getString("display_name", "Player1"), 3, dbHelper);
+            else
+                db.updateLevel(prefs.getString("display_name", "Player1"), 1, dbHelper);
+            top=j;
+        }
+        dbHelper.close();
+        topScore = (TextView) findViewById(R.id.topScore);
+        topScore.setText("Top: " + String.valueOf(top));
+    }
+
     private void initViews(int moles) {
         ImageView topLeft = (ImageView) findViewById(R.id.topLeftMole);
         ImageView bottomLeft = (ImageView) findViewById(R.id.bottomLeftMole);
@@ -127,50 +152,44 @@ public class GameActivity extends AppCompatActivity {
             public void run() {
                 togglePrefs(prefs);
             }
-        }).start();
+        }).run();
         cl.setBackgroundResource(background);
-        pausePlay.setBackgroundResource(R.drawable.pause);
-        if ((resumed) && (current==null)){
+        if ((resumed) && (current==null))
             countDown.start();
-            System.out.println("Countdown");
-        }
-        if (resumed) {
-            System.out.println("Resumed");
+        else if (resumed)
             play();
-        }
         resumed = false;
     }
 
     private void togglePrefs(SharedPreferences prefs) {
-        /*System.out.println(prefs.getBoolean("soundFX", true));
-        if (prefs.getBoolean("soundFX", true)){
-            System.out.println("true");
-            hitSound = new Music(this.getBaseContext());
-        }
-        else{
-            System.out.println("false");
-            hitSound = null;
-        }
+        System.out.println(prefs.getBoolean("soundfx", true));
         if (prefs.getBoolean("music", true)) {
-            if (!music.musicIsPlaying)
+            if (!music.musicIsPlaying) {
                 music.run();
+                music.setMusicVolume(100 * prefs.getFloat("music_volume", 1.0f));
+            }
         }
         else{
             if (music.musicIsPlaying)
                 music.pause();
-        }*/
+        }
+        if (prefs.getBoolean("soundfx", true)) {
+            music.setFXVolume(100 * prefs.getFloat("soundfx_volume", 1.0f));
+            hitSound = true;
+        }
+
+        else
+            hitSound = false;
+
         if (prefs.getBoolean("forestbackground", true))
             background = R.drawable.forestbackground;
         else
             background = R.drawable.desertbackground;
-        if (prefs.getBoolean("music", true))
-            music.run();
     }
 
     @Override
     protected void onStop(){
         super.onStop();
-        pausePlay.setBackgroundResource(R.drawable.play);
         if (counter != null)
             counter.cancel();
         for (int i=0; i<6; i++){
@@ -197,8 +216,8 @@ public class GameActivity extends AppCompatActivity {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (started) {
-                    if ((event.getAction() == MotionEvent.ACTION_DOWN) && (hitSound!=null))
-                        hitSound.playHit();
+                    if ((event.getAction() == MotionEvent.ACTION_DOWN) && (hitSound!=false))
+                        music.playHit();
                     if (event.getAction() == MotionEvent.ACTION_UP)
                         GameOn(counter);
                     return true;
@@ -231,6 +250,8 @@ public class GameActivity extends AppCompatActivity {
                 timer -= 100;
             counter.setClicked(true);
             count.setText("Score: " + String.valueOf(++j));
+            if (j>top)
+                topScore.setText("New top!");
         }
     }
 
@@ -244,8 +265,15 @@ public class GameActivity extends AppCompatActivity {
         else{
             countDown.cancel();
         }
-        Intent intent = new Intent(getBaseContext(), Settings.class);
-        startActivity(intent);
+        countDownView.setVisibility(View.GONE);
+        InGameDialog igd = new InGameDialog(this,music);
+        igd.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+                onResume();
+            }
+        });
+        igd.show();
         onStop();
     }
 
@@ -287,6 +315,7 @@ public class GameActivity extends AppCompatActivity {
                 countDownView.setVisibility(View.VISIBLE);
                 current.setImageResource(android.R.color.transparent);
                 current.setOnTouchListener(null);
+                setTopScore();
             }
             else{
                 current.setImageResource(android.R.color.transparent);

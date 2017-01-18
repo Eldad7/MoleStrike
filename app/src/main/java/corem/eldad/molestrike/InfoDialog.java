@@ -17,7 +17,7 @@ import android.widget.Switch;
  * Created by The Gate Keeper on 1/16/2017.
  */
 
-public class ThemesDialog extends Dialog implements android.view.View.OnClickListener {
+public class InfoDialog extends Dialog{
 
     public Activity c;
     private Context context;
@@ -25,43 +25,18 @@ public class ThemesDialog extends Dialog implements android.view.View.OnClickLis
     private SharedPreferences settings;
     SharedPreferences.Editor editor;
 
-    public ThemesDialog(Context context) {
+    public InfoDialog(Context context) {
         super(context);
         this.context = context;
-    }
-
-    @Override
-    public void onClick(View v) {
-        editor = settings.edit();
-        switch (v.getId()) {
-            case R.id.forest:
-                if (forest.isChecked()) {
-                    desert.setChecked(false);
-                    editor.putBoolean("desertbackground", false);
-                    editor.putBoolean("forestbackground", true);
-                    break;
-                }
-            case R.id.desert:
-                if (desert.isChecked()) {
-                    forest.setChecked(false);
-                    editor.putBoolean("desertbackground", true);
-                    editor.putBoolean("forestbackground", false);
-                    break;
-                }
-        }
-        editor.apply();
-        dismiss();
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        setContentView(R.layout.themes_dialog);
+        setContentView(R.layout.info_dialog);
         settings = PreferenceManager.getDefaultSharedPreferences(context);
         forest = (RadioButton) findViewById(R.id.forest);
-        forest.setOnClickListener(this);
         desert = (RadioButton) findViewById(R.id.desert);
-        desert.setOnClickListener(this);
     }
 }
