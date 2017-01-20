@@ -1,8 +1,10 @@
 package corem.eldad.molestrike;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -96,7 +98,6 @@ public class GameActivity extends AppCompatActivity {
         }.start();
         Fabric.with(this, new Crashlytics());
         logUser(prefs);
-        //Vibrator vibrate = (Vibrator) this.getSystemService(VIBRATOR_SERVICE);
     }
 
     private void logUser(SharedPreferences settings) {
@@ -105,7 +106,6 @@ public class GameActivity extends AppCompatActivity {
         Crashlytics.setUserEmail(settings.getString("display_name", "Player1") + "@fabric.io");
         Crashlytics.setUserName(settings.getString("display_name", "Player1"));
     }
-
 
     private void setTopScore() {
         boolean newHigh = false;
@@ -145,10 +145,9 @@ public class GameActivity extends AppCompatActivity {
             top = c.getInt(c.getColumnIndexOrThrow(MoleStrikeDB.player.COLUMN_TOP_SCORE));
             level = c.getInt(c.getColumnIndexOrThrow(MoleStrikeDB.player.COLUMN_LEVEL));
             topScore = (TextView) findViewById(R.id.topScore);
-            topScore.setText("Top: " + String.valueOf(top));
+            topScore.setText(String.format(getResources().getString(R.string.top), top));
         } else if (lose && j > top) {
             newHigh = true;
-            System.out.println("new high - " + newHigh);
             db.updateTopScore(prefs.getString("display_name", "Player1"), j, dbHelper);
             if ((j < 80) && (j > 29))
                 if (level < 2) {
@@ -164,17 +163,28 @@ public class GameActivity extends AppCompatActivity {
         dbHelper.close();
 
         if (lose) {
+            BroadcastReceiver broadcast_receiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context arg0, Intent intent) {
+                    String action = intent.getAction();
+                    if (action.equals("finish_activity")) {
+                        if (music.getMusicIsPlaying())
+                            music.pause();
+                        finish();
+                        unregisterReceiver(this);
+                    }
+                }
+            };
             Intent intent = new Intent(getBaseContext(), GameOverActivity.class);
             Bundle bundle = new Bundle();
             bundle.putBoolean("highScore", newHigh);
             bundle.putBoolean("newLevel", newLevel);
             intent.putExtras(bundle);
+            registerReceiver(broadcast_receiver, new IntentFilter("finish_activity"));
             startActivity(intent);
-            if (music.getMusicIsPlaying())
-                music.pause();
-            finish();
         }
     }
+
 
     private void initViews(int moles) {
         ImageView topLeft = (ImageView) findViewById(R.id.topLeftMole);
@@ -378,7 +388,7 @@ public class GameActivity extends AppCompatActivity {
                     if ((timer > 800) && (j % 3 == 0))
                         timer -= 100;
                     counter.setClicked(true);
-                    count.setText("Score: " + String.valueOf(++j));
+                    count.setText(String.format(getResources().getString(R.string.score), ++j));
                 }
             }
                 break;
@@ -393,7 +403,7 @@ public class GameActivity extends AppCompatActivity {
                         if (devilTimer > 800)
                             devilTimer -= 100;
                         j+=5;
-                        count.setText("Score: " + String.valueOf(j));
+                        count.setText(String.format(getResources().getString(R.string.score), j));
                     }
                 dcounter.setClicked();
                     break;
@@ -408,7 +418,7 @@ public class GameActivity extends AppCompatActivity {
             }
         }
             if (j>top)
-                topScore.setText("New top!");
+                topScore.setText(R.string.newTop);
             if (hitSound)
                 music.loadHit();
     }
@@ -440,6 +450,8 @@ public class GameActivity extends AppCompatActivity {
         } catch (NullPointerException ignored) {
 
         }
+        if (music.getMusicIsPlaying())
+            music.pause();
         finish();
     }
 

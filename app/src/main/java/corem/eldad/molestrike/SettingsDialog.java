@@ -85,6 +85,7 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
                 if (seekBar.getProgress()==0) {
                     editor.putBoolean("music", false);
                     editor.apply();
+                    music.setChecked(false);
                 }
             }
 
@@ -97,7 +98,6 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
             public void onStopTrackingTouch(SeekBar seekBar) {
                 editor.putFloat("music_volume", (0.01f * musicVolume.getProgress()));
                 editor.apply();
-                music.setChecked(false);
             }
         });
         int volume = (int) (100 * settings.getFloat("music_volume", 1));
@@ -166,7 +166,10 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
                     musicVolume.setEnabled(true);
                     musicVolume.setProgress(50);
                     editor.putFloat("music_volume", 0.5f);
+                    if (_music.getMusicIsPlaying())
+                        _music.setMusicIsPlaying(false);
                     _music.run();
+                    _music.setMusicVolume(0.5f);
                 }
                 else{
                     musicVolume.setProgress(0);

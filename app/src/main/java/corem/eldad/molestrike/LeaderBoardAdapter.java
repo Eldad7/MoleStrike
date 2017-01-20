@@ -69,7 +69,7 @@ public class LeaderBoardAdapter extends ArrayAdapter{
             int second = s.lastIndexOf("+");
             String player = s.substring(0,first);
             String playerLevel = s.substring(first+1,second);
-            String playerScore = s.substring(second+1,s.length()-1);
+            String playerScore = s.substring(second+1,s.length());
             name.setTypeface(custom_font);
             name.setTextColor(Color.RED);
             name.setTextSize(15.0f);

@@ -21,6 +21,7 @@ public class GameOverActivity extends AppCompatActivity {
     int background;
     Context context;
     Music music;
+    Intent intent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,7 +29,7 @@ public class GameOverActivity extends AppCompatActivity {
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         setContentView(R.layout.activity_game_over);
         cl = (ConstraintLayout) findViewById(R.id.activity_game_over);
-        Intent intent = getIntent();
+        intent = getIntent();
         Bundle b=intent.getExtras();
         level = b.getBoolean("newLevel");
         newHighScore = b.getBoolean("highScore");
@@ -46,7 +47,6 @@ public class GameOverActivity extends AppCompatActivity {
         else
             background = R.drawable.desertbackground;
         cl.setBackgroundResource(background);
-        highScore.setVisibility(View.VISIBLE);
         highScore.startAnimation(AnimationUtils.loadAnimation(context, R.anim.gameovertext));
         new Thread(new Runnable() {
             @Override
@@ -54,6 +54,7 @@ public class GameOverActivity extends AppCompatActivity {
                 if (newHighScore) {
                     highScore.setVisibility(View.VISIBLE);
                     highScore.startAnimation(AnimationUtils.loadAnimation(context, R.anim.gameovertext));
+                    MainActivity.dataChanged = true;
                     try {
                         Thread.sleep(1500);
                     } catch (InterruptedException e) {
@@ -69,6 +70,8 @@ public class GameOverActivity extends AppCompatActivity {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
+                Intent intent = new Intent("finish_activity");
+                sendBroadcast(intent);
                 finish();
             }
         },4000);

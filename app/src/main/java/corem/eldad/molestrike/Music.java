@@ -6,6 +6,8 @@ import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.SoundPool;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.support.v7.preference.PreferenceManager;
 
 import java.io.IOException;
@@ -13,16 +15,16 @@ import java.io.IOException;
 /**
  * @author ©EldadC
  */
-public class Music implements Runnable, MediaPlayer.OnCompletionListener {
+public class Music implements Runnable, MediaPlayer.OnCompletionListener{
     private static SoundPool soundPool;
     private int hitSound;
-    MediaPlayer mPlayer;
-    Activity activity;
+    private MediaPlayer mPlayer, mNextPlayer;
+    private Activity activity;
     boolean musicIsPlaying = false;
-    Context appContext;
-    Float volumeLevel = 1.0f;
-    Float rate = 1.0f;
-    Float musicVolume = 1.0f;
+    private Context appContext;
+    private Float volumeLevel = 1.0f;
+    private Float rate = 1.0f;
+    private Float musicVolume = 1.0f;
 
     public Music(Context context, Activity activity) {
         soundPool = new SoundPool(2, AudioManager.STREAM_MUSIC, 0);
@@ -59,6 +61,8 @@ public class Music implements Runnable, MediaPlayer.OnCompletionListener {
 
     public void pause(){
         mPlayer.stop();
+        mPlayer.release();
+        mPlayer = null;
         setMusicIsPlaying(false);
     }
 
@@ -76,25 +80,41 @@ public class Music implements Runnable, MediaPlayer.OnCompletionListener {
                     mPlayer = MediaPlayer.create(appContext, R.raw.game_music);
                 else
                     mPlayer = MediaPlayer.create(appContext, R.raw.main_music);
-                mPlayer.setLooping(true);
                 mPlayer.start();
-                mPlayer.setOnCompletionListener(this); // MediaPlayer.OnCompletionListener
+                mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                    @Override
+                    public void onPrepared(MediaPlayer mediaPlayer) {
+                        mPlayer.start();
+                    }
+                });
             } else {
                 try {
                     mPlayer.prepare();
-                    mPlayer.start();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
             musicIsPlaying = true;
+            createNextMediaPlayer();
         }
+    }
+
+    private void createNextMediaPlayer() {
+        if (activity.getClass() == GameActivity.class)
+            mNextPlayer = MediaPlayer.create(appContext, R.raw.game_music);
+        else
+            mNextPlayer = MediaPlayer.create(appContext, R.raw.main_music);
+        mPlayer.setNextMediaPlayer(mNextPlayer);
+        mPlayer.setOnCompletionListener(this);
     }
 
     @Override
     public void onCompletion(MediaPlayer mp) {
         if (musicIsPlaying && mPlayer != null) {
+            mPlayer.release();
+            mPlayer = mNextPlayer;
             mPlayer.start();
+            createNextMediaPlayer();
         }
     }
 }

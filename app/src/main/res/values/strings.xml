@@ -1,6 +1,11 @@
 <resources>
     <string name="app_name">Mole Strike</string>
     <string name="themes">Themes</string>
+    <string name="top">"Top: %d"</string>
+    <string name="score">Score: %d</string>
+    <string name="newTop">New top!</string>
+    <string name="hsb">Hide Scoreboard</string>
+    <string name="ssb">Show Scoreboard</string>
 
     <string-array name="themes_array_titles">
         <item>Forest</item>
