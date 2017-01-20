@@ -8,7 +8,10 @@ import android.os.Bundle;
 import android.support.v7.preference.PreferenceManager;
 import android.view.View;
 import android.view.Window;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.SeekBar;
 import android.widget.Switch;
@@ -35,8 +38,8 @@ public class InfoDialog extends Dialog{
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.info_dialog);
-        settings = PreferenceManager.getDefaultSharedPreferences(context);
-        forest = (RadioButton) findViewById(R.id.forest);
-        desert = (RadioButton) findViewById(R.id.desert);
+        ImageView credits = (ImageView) findViewById(R.id.credits);
+        credits.startAnimation(AnimationUtils.loadAnimation(context, R.anim.imageclick));
+        credits.getAnimation().setRepeatCount(Animation.INFINITE);
     }
 }

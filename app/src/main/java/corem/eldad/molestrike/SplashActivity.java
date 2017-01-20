@@ -4,21 +4,35 @@ import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
+import com.crashlytics.android.Crashlytics;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import io.fabric.sdk.android.Fabric;
+import io.fabric.sdk.android.services.settings.Settings;
 
 /**
  * Created by The Gate Keeper on 1/15/2017.
  */
 public class SplashActivity extends Activity {
+
+    int level, score;
+    String name;
+    ArrayList list;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Fabric.with(this, new Crashlytics());
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = settings.edit();
+        logUser(settings);
         if(!(settings.getBoolean("active", false))) {
             editor.putBoolean("active", true);
             editor.putBoolean("forestbackground", true);
@@ -32,10 +46,15 @@ public class SplashActivity extends Activity {
             createUsers();
             System.out.println("First time!");
         }
+        list = new ArrayList();
+        getUsers();
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
                 Intent intent = new Intent(SplashActivity.this, MainActivity.class);
+                Bundle b = new Bundle();
+                b.putStringArrayList("list",list);
+                intent.putExtras(b);
                 startActivity(intent);
                 finish();
             }
@@ -68,6 +87,41 @@ public class SplashActivity extends Activity {
             dbHelper.insert(MoleStrikeDB.player.TABLE_NAME, null, values);
         }
 
+        dbHelper.close();
+    }
+
+    private void logUser(SharedPreferences settings) {
+        // TODO: Use the current user's information
+        // You can call any combination of these three methods
+        Crashlytics.setUserEmail(settings.getString("display_name", "Player1") + "@fabric.io");
+        Crashlytics.setUserName(settings.getString("display_name", "Player1"));
+    }
+
+    public void getUsers() {
+        MoleStrikeDB db = new MoleStrikeDB(this);
+        SQLiteDatabase dbHelper = db.getReadableDatabase();
+        String[] projection = {
+                MoleStrikeDB.player.COLUMN_NAME,
+                MoleStrikeDB.player.COLUMN_TOP_SCORE,
+                MoleStrikeDB.player.COLUMN_LEVEL
+        };
+        Cursor c = dbHelper.query(
+                MoleStrikeDB.player.TABLE_NAME,                     // The table to query
+                projection,
+                null,
+                null,
+                null,
+                null,
+                "topScore DESC"
+        );
+        c.moveToFirst();
+        for (int i=0; i<c.getCount(); i++){
+            name = c.getString(c.getColumnIndexOrThrow(MoleStrikeDB.player.COLUMN_NAME));
+            level = c.getInt(c.getColumnIndexOrThrow(MoleStrikeDB.player.COLUMN_LEVEL));
+            score = c.getInt(c.getColumnIndexOrThrow(MoleStrikeDB.player.COLUMN_TOP_SCORE));
+            list.add(i,name + "+" + String.valueOf(level) + "+" + String.valueOf(score));
+            c.moveToNext();
+        }
         dbHelper.close();
     }
 }

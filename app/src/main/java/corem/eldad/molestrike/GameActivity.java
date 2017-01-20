@@ -1,5 +1,6 @@
 package corem.eldad.molestrike;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -8,6 +9,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Vibrator;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
@@ -16,17 +18,22 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.crashlytics.android.Crashlytics;
+
+import io.fabric.sdk.android.Fabric;
+
 
 /**
  * Created by eldadc on 20/12/2016.
  */
 
 public class GameActivity extends AppCompatActivity {
-    ImageView current, devil, angel;
+    ImageView current, lifeView;
     ImageView[] characters;
     long timer, devilTimer,angelTimer;
-    static boolean lose=false;
+    boolean lose = false;
     Timer counter;
+    int life=3;
     DevilTimer dcounter;
     AngelTimer acounter;
     int j=0,numberOfMoles, background, top=0;
@@ -58,6 +65,7 @@ public class GameActivity extends AppCompatActivity {
         count = (TextView) findViewById(R.id.count);
         count.setText("Score: " + String.valueOf(j));
         countDownView = (ImageView) findViewById(R.id.countDownView);
+        lifeView = (ImageView) findViewById(R.id.life);
         for (int i=0; i<numberOfMoles; i++)
             characters[i].setBackgroundResource(R.drawable.jmole1);
         devilTimer=angelTimer=timer=2500;
@@ -86,22 +94,37 @@ public class GameActivity extends AppCompatActivity {
                 play();
             }
         }.start();
+        Fabric.with(this, new Crashlytics());
+        logUser(prefs);
+        //Vibrator vibrate = (Vibrator) this.getSystemService(VIBRATOR_SERVICE);
     }
 
-    private void setTopScore(){
+    private void logUser(SharedPreferences settings) {
+        // TODO: Use the current user's information
+        // You can call any combination of these three methods
+        Crashlytics.setUserEmail(settings.getString("display_name", "Player1") + "@fabric.io");
+        Crashlytics.setUserName(settings.getString("display_name", "Player1"));
+    }
+
+
+    private void setTopScore() {
         boolean newHigh = false;
         boolean newLevel = false;
+        if (!lose && life < 3 && life > 0)
+            play();
+        if (life == 0)
+            lose = true;
         if (lose) {
             try {
                 dcounter.cancel();
                 acounter.cancel();
                 counter.cancel();
-            } catch (NullPointerException ignored){
+            } catch (NullPointerException ignored) {
 
             }
         }
         SQLiteDatabase dbHelper = db.getWritableDatabase();
-        if ((j==top) && (j==0)) {
+        if ((j == top) && (j == 0)) {
             String whereClause = MoleStrikeDB.player.COLUMN_PLAYER + "=?";
             String[] whereArgs = {"1"};
             String[] projection = {
@@ -121,38 +144,36 @@ public class GameActivity extends AppCompatActivity {
             c.moveToFirst();
             top = c.getInt(c.getColumnIndexOrThrow(MoleStrikeDB.player.COLUMN_TOP_SCORE));
             level = c.getInt(c.getColumnIndexOrThrow(MoleStrikeDB.player.COLUMN_LEVEL));
-        }
-        else if (j>top){
+            topScore = (TextView) findViewById(R.id.topScore);
+            topScore.setText("Top: " + String.valueOf(top));
+        } else if (lose && j > top) {
             newHigh = true;
+            System.out.println("new high - " + newHigh);
             db.updateTopScore(prefs.getString("display_name", "Player1"), j, dbHelper);
             if ((j < 80) && (j > 29))
-                if (level<2) {
+                if (level < 2) {
                     db.updateLevel(prefs.getString("display_name", "Player1"), 2, dbHelper);
                     newLevel = true;
-                }
-            else if (j>79)
-                    if (level<3) {
+                } else if (j > 79)
+                    if (level < 3) {
                         db.updateLevel(prefs.getString("display_name", "Player1"), 3, dbHelper);
                         newLevel = true;
                     }
-            top=j;
+            top = j;
         }
         dbHelper.close();
-        topScore = (TextView) findViewById(R.id.topScore);
-        topScore.setText("Top: " + String.valueOf(top));
-        if (lose){
+
+        if (lose) {
             Intent intent = new Intent(getBaseContext(), GameOverActivity.class);
             Bundle bundle = new Bundle();
-            bundle.putInt("numberOfMoles", numberOfMoles);
             bundle.putBoolean("highScore", newHigh);
-            bundle.putBoolean("newLevel",newLevel);
+            bundle.putBoolean("newLevel", newLevel);
             intent.putExtras(bundle);
             startActivity(intent);
             if (music.getMusicIsPlaying())
                 music.pause();
             finish();
         }
-
     }
 
     private void initViews(int moles) {
@@ -175,6 +196,7 @@ public class GameActivity extends AppCompatActivity {
     @Override
     protected void onResume(){
         super.onResume();
+        System.out.println("Resuming");
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -228,35 +250,31 @@ public class GameActivity extends AppCompatActivity {
 
     private void play() {
         started=true;
-        int random = (int )(Math.random() * 500);
+        lifeSet(life);
+        int type = 1;
+        int random = (int )(Math.random() * 2000);
+        int character = random;
+        if (character%77 == 0)
+            type = 3;
+
+        if (character%66 == 0){
+            type = 2;
+        }
         if (!lose) {
             current = characters[random % numberOfMoles];
-            while ((devil == current) || (current==angel))
-                current = characters[random % numberOfMoles];
-            current.setBackgroundResource(R.drawable.goingup);
-            startTransition(current, 1);
-        }
-    }
-
-    private void devilPlay(){
-        int random = (int )(Math.random() * 500);
-        if (!lose) {
-            devil = characters[random % numberOfMoles];
-            while ((devil == current) || (devil==angel))
-                devil = characters[random % numberOfMoles];
-            devil.setBackgroundResource(R.drawable.goingupdevil);
-            startTransition(devil, 2);
-        }
-    }
-
-    private void AngelPlay(){
-        int random = (int )(Math.random() * 500);
-        if (!lose) {
-            angel = characters[random % numberOfMoles];
-            while ((angel == current) || (devil==angel))
-                angel = characters[random % numberOfMoles];
-            angel.setBackgroundResource(R.drawable.goingupangel);
-            startTransition(angel, 3);
+            switch (type) {
+                case 2: {
+                    current.setBackgroundResource(R.drawable.goingupdevil);
+                    break;
+                }
+                case 3: {
+                    current.setBackgroundResource(R.drawable.goingupangel);
+                    break;
+                }
+                default:
+                    current.setBackgroundResource(R.drawable.goingup);
+            }
+            startTransition(current, type);
         }
     }
 
@@ -271,8 +289,11 @@ public class GameActivity extends AppCompatActivity {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         if (started) {
-                            if ((event.getAction() == MotionEvent.ACTION_DOWN) && (hitSound))
+                            if ((event.getAction() == MotionEvent.ACTION_DOWN) && (hitSound)) {
                                 music.playHit();
+                                Vibrator vibrate = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
+                                vibrate.vibrate(500);
+                            }
                             if (event.getAction() == MotionEvent.ACTION_UP)
                                 GameOn(1);
                             return true;
@@ -295,8 +316,11 @@ public class GameActivity extends AppCompatActivity {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         if (started) {
-                            if ((event.getAction() == MotionEvent.ACTION_DOWN) && (hitSound))
+                            if ((event.getAction() == MotionEvent.ACTION_DOWN) && (hitSound)) {
                                 music.playHit();
+                                Vibrator vibrate = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
+                                vibrate.vibrate(500);
+                            }
                             if (event.getAction() == MotionEvent.ACTION_UP)
                                 GameOn(2);
                             return true;
@@ -304,10 +328,9 @@ public class GameActivity extends AppCompatActivity {
                         return false;
                     }
                 });
-                if (firstTime) {
-                    firstTime = false;
+                if (devilFirstTime) {
+                    devilFirstTime = false;
                     dcounter = new DevilTimer(timer, 1000);
-                    dcounter.resetHits();
                 } else {
                     dcounter.setMillisInFuture(timer);
                 }
@@ -319,8 +342,11 @@ public class GameActivity extends AppCompatActivity {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         if (started) {
-                            if ((event.getAction() == MotionEvent.ACTION_DOWN) && (hitSound))
+                            if ((event.getAction() == MotionEvent.ACTION_DOWN) && (hitSound)) {
                                 music.playHit();
+                                Vibrator vibrate = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
+                                vibrate.vibrate(500);
+                            }
                             if (event.getAction() == MotionEvent.ACTION_UP)
                                 GameOn(3);
                             return true;
@@ -328,11 +354,12 @@ public class GameActivity extends AppCompatActivity {
                         return false;
                     }
                 });
-                if (firstTime) {
-                    firstTime = false;
+                if (angelFirstTime) {
+                    angelFirstTime = false;
                     acounter = new AngelTimer(timer, 1000);
                 } else
                     acounter.setMillisInFuture(timer);
+                acounter.setClicked(false);
                 acounter.start();
                 break;
             }
@@ -356,34 +383,64 @@ public class GameActivity extends AppCompatActivity {
             }
                 break;
             case 2: {
-                if (dcounter.getClicked()) {
-                    devil.setImageResource(R.drawable.pow);
-                    devil.setBackgroundResource(R.drawable.goingdowndevil);
-                    devil.setOnTouchListener(null);
-                    moleAnimation = (AnimationDrawable) devil.getBackground();
-                    moleAnimation.start();
-                    if (devilTimer > 800)
-                        devilTimer -= 100;
-                } else {
-                    dcounter.setClicked();
+                System.out.println("Case 2");
+                    if (dcounter.getClicked()) {
+                        current.setBackgroundResource(R.drawable.goingdowndevil);
+                        current.setImageResource(R.drawable.pow);
+                        current.setOnTouchListener(null);
+                        moleAnimation = (AnimationDrawable) current.getBackground();
+                        moleAnimation.start();
+                        if (devilTimer > 800)
+                            devilTimer -= 100;
+                        j+=5;
+                        count.setText("Score: " + String.valueOf(j));
+                    }
+                dcounter.setClicked();
+                    break;
                 }
-                count.setText("Score: " + String.valueOf(++j+4));
-                break;
+            case 3: {
+                current.setImageResource(R.drawable.pow);
+                current.setBackgroundResource(R.drawable.goingdownangel);
+                current.setOnTouchListener(null);
+                moleAnimation = (AnimationDrawable) current.getBackground();
+                moleAnimation.start();
+                acounter.setClicked(true);
             }
-            case 3:
-                if (!acounter.getClicked()) {
-                    angel.setBackgroundResource(R.drawable.goingdownangel);
-                    angel.setOnTouchListener(null);
-                    moleAnimation = (AnimationDrawable) angel.getBackground();
-                    moleAnimation.start();
-                    acounter.setClicked(true);
-                }
-                break;
         }
             if (j>top)
                 topScore.setText("New top!");
             if (hitSound)
                 music.loadHit();
+    }
+
+    private void lifeSet(int life){
+        switch(life){
+            case 2:{
+                lifeView.setImageResource(R.drawable.ic_heart_2);
+                break;
+            }
+            case 1:{
+                lifeView.setImageResource(R.drawable.ic_heart_1);
+                break;
+            }
+            case 0:{
+                lifeView.setImageResource(R.drawable.ic_heart_0);
+                break;
+            }
+        }
+    }
+
+    @Override
+    public void onBackPressed(){
+        try {
+            dcounter.cancel();
+            acounter.cancel();
+            counter.cancel();
+            countDown.cancel();
+        } catch (NullPointerException ignored) {
+
+        }
+        finish();
     }
 
     public void pause(View view) {
@@ -437,13 +494,11 @@ public class GameActivity extends AppCompatActivity {
         public void onFinish() {
             if ((!clicked) && (!resumed)) {
                 System.out.println("Lose");
-                lose = true;
+                life--;
                 setClicked(true);
                 current.setBackgroundResource(R.drawable.goingdown);
                 moleAnimation = (AnimationDrawable) current.getBackground();
                 moleAnimation.start();
-                countDownView.setImageResource(R.drawable.gameover);
-                countDownView.setVisibility(View.VISIBLE);
                 current.setImageResource(android.R.color.transparent);
                 current.setOnTouchListener(null);
                 setTopScore();
@@ -474,8 +529,9 @@ public class GameActivity extends AppCompatActivity {
         }
 
         void setClicked(){
-            if (++hits==3)
+            if (++hits==2)
                 this.clicked = true;
+            System.out.println(hits);
         }
 
         boolean getClicked(){
@@ -487,20 +543,19 @@ public class GameActivity extends AppCompatActivity {
         }
         public void onFinish() {
             if ((!clicked) && (!resumed)) {
-                lose = true;
-                hits=3;
-                setClicked();
-                devil.setBackgroundResource(R.drawable.goingdowndevil);
-                moleAnimation = (AnimationDrawable) devil.getBackground();
+                life--;
+                resetHits();
+                current.setBackgroundResource(R.drawable.goingdowndevil);
+                moleAnimation = (AnimationDrawable) current.getBackground();
                 moleAnimation.start();
-                countDownView.setImageResource(R.drawable.gameover);
-                countDownView.setVisibility(View.VISIBLE);
-                devil.setImageResource(android.R.color.transparent);
-                devil.setOnTouchListener(null);
+                current.setImageResource(android.R.color.transparent);
+                current.setOnTouchListener(null);
                 setTopScore();
             }
             else{
-                devil.setImageResource(android.R.color.transparent);
+                current.setImageResource(android.R.color.transparent);
+                clicked=false;
+                resetHits();
                 play();
             }
             finished = true;
@@ -529,10 +584,10 @@ public class GameActivity extends AppCompatActivity {
         void setClicked(boolean clicked){
             System.out.println("Clicked = "+clicked);
             this.clicked = clicked;
-        }
-
-        boolean getClicked(){
-            return clicked;
+            if (this.clicked) {
+                life--;
+                lifeSet(life);
+            }
         }
 
         public void onTick(long millisUntilFinished) {
@@ -540,19 +595,15 @@ public class GameActivity extends AppCompatActivity {
         }
         public void onFinish() {
             if ((clicked) && (!resumed)) {
-                lose = true;
-                setClicked(true);
-                angel.setBackgroundResource(R.drawable.goingdownangel);
-                moleAnimation = (AnimationDrawable) angel.getBackground();
-                moleAnimation.start();
-                countDownView.setImageResource(R.drawable.gameover);
-                countDownView.setVisibility(View.VISIBLE);
-                angel.setImageResource(android.R.color.transparent);
-                angel.setOnTouchListener(null);
+                current.setImageResource(android.R.color.transparent);
                 setTopScore();
             }
             else{
-                angel.setImageResource(android.R.color.transparent);
+                current.setBackgroundResource(R.drawable.goingdownangel);
+                moleAnimation = (AnimationDrawable) current.getBackground();
+                moleAnimation.start();
+
+                current.setOnTouchListener(null);
                 play();
             }
             finished = true;

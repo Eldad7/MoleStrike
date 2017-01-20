@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:id="@+id/leaderBoardLayout">
+
+    <TableLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/colorPrimaryDark"
+        android:id="@+id/table">
+
+        <TableRow
+            android:id="@+id/row"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="5dp">
+
+            <TextView
+                android:id="@+id/name"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:layout_width="100dp"
+                android:padding="5dp"/>
+            <TextView
+                android:id="@+id/level"
+                android:layout_width="20dp"
+                android:padding="5dp"/>
+            <TextView
+                android:id="@+id/score"
+                android:layout_width="wrap_content"
+                android:padding="5dp"/>
+        </TableRow>
+    </TableLayout>
+</LinearLayout>

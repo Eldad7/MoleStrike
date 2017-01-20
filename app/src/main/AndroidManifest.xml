@@ -26,6 +26,11 @@
             android:name=".GameActivity"
             android:screenOrientation="landscape" />
         <activity android:name=".GameOverActivity"></activity>
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="b870e8fd5942a5b7c37bfbe7a5b2456e3f4193d7" />
     </application>
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.VIBRATE"/>
 </manifest>

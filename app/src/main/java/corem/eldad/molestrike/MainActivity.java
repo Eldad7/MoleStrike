@@ -1,20 +1,25 @@
 package corem.eldad.molestrike;
 
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.preference.PreferenceManager;
 import android.view.View;
 import android.view.animation.AnimationUtils;
-import android.widget.ImageView;
+import android.widget.Button;
+import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.Toast;
+import com.crashlytics.android.Crashlytics;
+import java.util.ArrayList;
+import io.fabric.sdk.android.Fabric;
 
 public class MainActivity extends AppCompatActivity {
     MoleStrikeDB db;
@@ -25,12 +30,19 @@ public class MainActivity extends AppCompatActivity {
     int userLevel = 1;
     RadioButton medium, hard;
     Music music;
+    private ListView mListView;
+    private ArrayList<String> mList;
+    private Button button;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         db = new MoleStrikeDB(this);
+        Intent intent = getIntent();
+        Bundle b = intent.getExtras();
+        mList = b.getStringArrayList("list");
+        System.out.println(mList.size());
         music = new Music(this.getBaseContext(), this);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         cl = (ConstraintLayout) findViewById(R.id.activity_main);
@@ -44,6 +56,15 @@ public class MainActivity extends AppCompatActivity {
         medium = (RadioButton) findViewById(R.id.medium);
         hard = (RadioButton) findViewById(R.id.hard);
         Toast.makeText(this, "Hello " + name, Toast.LENGTH_SHORT).show();
+        Fabric.with(this, new Crashlytics());
+        logUser(prefs);
+        mListView = (ListView) findViewById(R.id.list);
+        LeaderBoardAdapter listAdapter = new LeaderBoardAdapter(MainActivity.this, R.layout.leader_board, mList);
+        mListView.setAdapter(listAdapter);
+        button = (Button) findViewById(R.id.button);
+        Typeface custom_font = Typeface.createFromAsset(this.getAssets(),  "fonts/njnaruto.ttf");
+        button.setTypeface(custom_font);
+        button.setTextColor(Color.BLACK);
     }
 
     @Override
@@ -62,46 +83,6 @@ public class MainActivity extends AppCompatActivity {
         }).run();
         cl.setBackgroundResource(background);
     }
-
-    /*private void gameOver() {
-        setContentView(R.layout.activity_game_over);
-        Intent intent = getIntent();
-        Bundle b=intent.getExtras();
-        final boolean level = b.getBoolean("newLevel");
-        final boolean newHighScore = b.getBoolean("highScore");
-        final ImageView highScore = (ImageView) findViewById(R.id.highScore);
-        final ImageView newLevel = (ImageView) findViewById(R.id.newLevel);
-        final Context context = this;
-        cl = (ConstraintLayout) findViewById(R.id.activity_game_over);
-        togglePrefs(prefs);
-        cl.setBackgroundResource(background);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                if (newHighScore) {
-                    highScore.setVisibility(View.VISIBLE);
-                    highScore.startAnimation(AnimationUtils.loadAnimation(context, R.anim.imageclick));
-                    try {
-                        Thread.sleep(3000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-                if (level){
-                    newLevel.setVisibility(View.VISIBLE);
-                    newLevel.startAnimation(AnimationUtils.loadAnimation(context, R.anim.imageclick));
-                }
-            }
-        }).start();
-    }
-*/
-    /*@Override
-    public void onBackPressed(){
-        setContentView(R.layout.activity_main);
-        togglePrefs(prefs);
-        cl = (ConstraintLayout) findViewById(R.layout.activity_main);
-        cl.setBackgroundResource(background);
-    }*/
 
     private void pullFromDB(){
         SQLiteDatabase dbHelper = db.getReadableDatabase();
@@ -137,6 +118,7 @@ public class MainActivity extends AppCompatActivity {
         if (prefs.getBoolean("music", true))
             if (!music.getMusicIsPlaying()){
                 music.run();
+                music.setMusicVolume(prefs.getFloat("music_volume", 1.0f));
                 System.out.println("Play");
             }
     }
@@ -158,6 +140,18 @@ public class MainActivity extends AppCompatActivity {
                     play(ldd.getLevel());
             }
         });
+    }
+
+    @Override
+    public void onBackPressed(){
+        if (music.getMusicIsPlaying())
+            music.setMusicIsPlaying(false);
+    }
+
+    @Override
+    public void finish(){
+        if (music.getMusicIsPlaying())
+            music.setMusicIsPlaying(false);
     }
 
     public void play(int level) {
@@ -195,5 +189,25 @@ public class MainActivity extends AppCompatActivity {
     public void about(View view) {
         InfoDialog cdd=new InfoDialog(MainActivity.this);
         cdd.show();
+    }
+
+    private void logUser(SharedPreferences settings) {
+        // TODO: Use the current user's information
+        // You can call any combination of these three methods
+        Crashlytics.setUserEmail(settings.getString("display_name", "Player1") + "@fabric.io");
+        Crashlytics.setUserName(settings.getString("display_name", "Player1"));
+    }
+
+    public void showscoreboard(View view) {
+        button.setText("Hide Scoreboard");
+        view.startAnimation(AnimationUtils.loadAnimation(this, R.anim.imageclick));
+        if(mListView.getVisibility() == View.GONE) {
+            mListView.startAnimation(AnimationUtils.loadAnimation(this, R.anim.leaderboard_animation_in));
+            mListView.setVisibility(View.VISIBLE);
+        }
+        else{
+            mListView.startAnimation(AnimationUtils.loadAnimation(this, R.anim.leaderboard_animation_out));
+            mListView.setVisibility(View.GONE);
+        }
     }
 }
