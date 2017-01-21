@@ -6,6 +6,13 @@
     <string name="newTop">New top!</string>
     <string name="hsb">Hide Scoreboard</string>
     <string name="ssb">Show Scoreboard</string>
+    <string name="topText">Top:</string>
+    <string name="countdown_view">Countdown view</string>
+    <string name="moleHit">Hit the mole to bring it down!</string>
+    <string name="great">Great!</string>
+    <string name="hitDevil">Hit the devil three times to knock it down!</string>
+    <string name="angelHit">DON\'T HIT THE ANGEL!</string>
+    <string name="rabbitsHit">Rabbits will try to defend the moles!</string>
 
     <string-array name="themes_array_titles">
         <item>Forest</item>

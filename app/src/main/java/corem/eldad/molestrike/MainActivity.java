@@ -16,12 +16,24 @@ import android.view.animation.AnimationUtils;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.crashlytics.android.Crashlytics;
 import java.util.ArrayList;
 import io.fabric.sdk.android.Fabric;
+
+/**
+ * @author ©EldadC
+ *
+ * The main activity is the first screen, so I seperated a lot of views and data initialization to seperate threads
+ * to ease on the main thread.
+ * Toggle prefs is to set any shared preferences - Background,music,soundfx etc. and so it has to run on two occasions:
+ * When resuming to app (hence - it's inside onResume) and when changing settings.
+ * The settings, about and choose themes are all seperated dialogs, and they are initialized inside their own functions,
+ * which are triggered by onClick.
+ * getUpdatedList is started only when the flag dataChanged is on true, which is triggered or by the settings dialog
+ * (changed your user name) or when you've reached a new high score and unlocked a new level
+ */
 
 public class MainActivity extends AppCompatActivity {
     MoleStrikeDB db;
@@ -31,7 +43,6 @@ public class MainActivity extends AppCompatActivity {
     int background;
     int userLevel = 1;
     int score;
-    private RadioButton medium, hard;
     private Music music;
     private ListView mListView;
     private Button button;
@@ -48,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = getIntent();
         Bundle b = intent.getExtras();
         mList = b.getStringArrayList("list");
-        System.out.println(mList.size());
+
         music = new Music(this.getBaseContext(), this);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         cl = (ConstraintLayout) findViewById(R.id.activity_main);
@@ -59,8 +70,6 @@ public class MainActivity extends AppCompatActivity {
                 pullFromDB();
             }
         }).start();
-        medium = (RadioButton) findViewById(R.id.medium);
-        hard = (RadioButton) findViewById(R.id.hard);
         Toast.makeText(this, "Hello " + name, Toast.LENGTH_SHORT).show();
         Fabric.with(this, new Crashlytics());
         logUser(prefs);
@@ -117,7 +126,6 @@ public class MainActivity extends AppCompatActivity {
         c.moveToFirst();
         userLevel = c.getInt(c.getColumnIndexOrThrow(MoleStrikeDB.player.COLUMN_LEVEL));
         score = c.getInt(c.getColumnIndexOrThrow(MoleStrikeDB.player.COLUMN_TOP_SCORE));
-        System.out.println(c.getCount());
         dbHelper.close();
     }
 
@@ -130,7 +138,6 @@ public class MainActivity extends AppCompatActivity {
             if (!music.getMusicIsPlaying()){
                 music.run();
                 music.setMusicVolume(prefs.getFloat("music_volume", 1.0f));
-                System.out.println("Play");
             }
         if (dataChanged){
             getUpdatedList();
@@ -139,19 +146,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void chooseLevel(View view){
-        if (userLevel==2) {
-            medium.setBackgroundResource(R.drawable.medium);
-            medium.setEnabled(true);
-        } else if (userLevel>2) {
-            hard.setBackgroundResource(R.drawable.hard);
-            hard.setEnabled(true);
-        }
         final LevelDialog ldd=new LevelDialog(MainActivity.this);
         ldd.show();
+        ldd.setLevels(userLevel);
         ldd.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialog) {
-                if (ldd.levelChosen)
+                if (ldd.getLevelChosen())
                     play(ldd.getLevel());
             }
         });
@@ -170,24 +171,27 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void play(int level) {
-        int numberOfMoles = 6;
-        switch (level){
-            case 1:break;
-            case 2:numberOfMoles = 9;
-        }
-        System.out.println(level);
         if (music.getMusicIsPlaying())
             music.pause();
         Intent intent = new Intent(getBaseContext(), GameActivity.class);
         Bundle bundle = new Bundle();
-        bundle.putInt("numberOfMoles", numberOfMoles);
+        bundle.putInt("top", score);
+        bundle.putInt("level", level);
         intent.putExtras(bundle);
         startActivity(intent);
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 
     public void settingsMenu(View view) {
         SettingsDialog cdd=new SettingsDialog(MainActivity.this, music);
         cdd.show();
+        cdd.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+                if (dataChanged)
+                    getUpdatedList();
+            }
+        });
     }
 
     public void themesDialog(View view) {
@@ -253,11 +257,14 @@ public class MainActivity extends AppCompatActivity {
             level = c.getInt(c.getColumnIndexOrThrow(MoleStrikeDB.player.COLUMN_LEVEL));
             _score = c.getInt(c.getColumnIndexOrThrow(MoleStrikeDB.player.COLUMN_TOP_SCORE));
             mList.add(i,name + "+" + String.valueOf(level) + "+" + String.valueOf(_score));
-            if (name.equals(prefs.getString("display_name", "Player1")))
+            if (name.equals(prefs.getString("display_name", "Player1"))) {
                 score = _score;
+                userLevel = level;
+            }
             c.moveToNext();
         }
         dbHelper.close();
         ((BaseAdapter)mListView.getAdapter()).notifyDataSetChanged();
+        dataChanged = false;
     }
 }

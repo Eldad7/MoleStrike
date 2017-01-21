@@ -14,6 +14,10 @@ import java.io.IOException;
 
 /**
  * @author ©EldadC
+ *
+ * In order to create a more "smooth" loop, I have created the function create next media player
+ * Since each activity has it's own sound, you need to save a reference to the activity that called Music
+ * To overcome null pointers, every function is checking if musicIsPlaying is true or false
  */
 public class Music implements Runnable, MediaPlayer.OnCompletionListener{
     private static SoundPool soundPool;
@@ -23,8 +27,7 @@ public class Music implements Runnable, MediaPlayer.OnCompletionListener{
     boolean musicIsPlaying = false;
     private Context appContext;
     private Float volumeLevel = 1.0f;
-    private Float rate = 1.0f;
-    private Float musicVolume = 1.0f;
+    private Float musicVolume;
 
     public Music(Context context, Activity activity) {
         soundPool = new SoundPool(2, AudioManager.STREAM_MUSIC, 0);
@@ -32,17 +35,12 @@ public class Music implements Runnable, MediaPlayer.OnCompletionListener{
         this.activity = activity;
         hitSound = soundPool.load(appContext, R.raw.hit,1);
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
-        musicVolume = settings.getFloat("music_volume", 1.0f);
-        volumeLevel = settings.getFloat("soundfx_volume", 1.0f);
+        musicVolume = settings.getFloat("music_volume", 0.5f);
+        volumeLevel = settings.getFloat("soundfx_volume", 0.5f);
     }
 
     public void loadHit(){
         hitSound = soundPool.load(appContext, R.raw.hit,1);
-    }
-
-    public void setFXRate(float rate){
-        this.rate = rate;
-        soundPool.setRate(hitSound,rate);
     }
 
     public void setFXVolume(float volume){
@@ -56,7 +54,7 @@ public class Music implements Runnable, MediaPlayer.OnCompletionListener{
     }
 
     public void playHit() {
-        soundPool.play(hitSound, volumeLevel, volumeLevel, 1, 0, rate);
+        soundPool.play(hitSound, volumeLevel, volumeLevel, 1, 0, 1.0f);
     }
 
     public void pause(){
@@ -113,6 +111,7 @@ public class Music implements Runnable, MediaPlayer.OnCompletionListener{
         if (musicIsPlaying && mPlayer != null) {
             mPlayer.release();
             mPlayer = mNextPlayer;
+            mPlayer.setVolume(musicVolume, musicVolume);
             mPlayer.start();
             createNextMediaPlayer();
         }

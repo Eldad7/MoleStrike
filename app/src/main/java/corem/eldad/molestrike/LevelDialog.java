@@ -1,18 +1,16 @@
 package corem.eldad.molestrike;
 
-import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.v7.preference.PreferenceManager;
 import android.view.View;
 import android.view.Window;
-import android.widget.ImageView;
 import android.widget.RadioButton;
 
 /**
  * Created by The Gate Keeper on 1/16/2017.
+ * This custom dialog let's the player choose which level he wants - Easy,Medium or Hard
+ * The getLevelChosen is to make sure there are no side effects if the player dismisses the dialog but doesn't choose a level
  */
 
 public class LevelDialog extends Dialog implements android.view.View.OnClickListener {
@@ -38,10 +36,14 @@ public class LevelDialog extends Dialog implements android.view.View.OnClickList
     @Override
     public void onClick(View v) {
         switch (v.getId()){
-            case R.id.medium:
+            case R.id.medium: {
                 level = 2;
-            case R.id.hard:
+                break;
+            }
+            case R.id.hard: {
                 level = 3;
+                break;
+            }
             default: level=1;
 
         }
@@ -60,5 +62,15 @@ public class LevelDialog extends Dialog implements android.view.View.OnClickList
         medium.setOnClickListener(this);
         hard = (RadioButton) findViewById(R.id.hard);
         hard.setOnClickListener(this);
+    }
+
+    public void setLevels(int levels){
+        if (levels>1) {
+            medium.setBackgroundResource(R.drawable.medium);
+            medium.setEnabled(true);
+        } if (levels>2) {
+            hard.setBackgroundResource(R.drawable.hard);
+            hard.setEnabled(true);
+        }
     }
 }

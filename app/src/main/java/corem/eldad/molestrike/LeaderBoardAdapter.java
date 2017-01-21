@@ -28,6 +28,8 @@ import java.util.List;
 
 /**
  * Created by The Gate Keeper on 1/16/2017.
+ * LeaderBoardAdapter is an array adapter for the MainActivity leaderboard. I made it in order to better control the view
+ * and desired effect of the leaderboard
  */
 
 public class LeaderBoardAdapter extends ArrayAdapter{

@@ -19,6 +19,7 @@ import android.widget.Switch;
 
 /**
  * Created by The Gate Keeper on 1/16/2017.
+ *
  */
 
 public class SettingsDialog extends Dialog implements android.view.View.OnClickListener{
@@ -49,7 +50,6 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
         settings = PreferenceManager.getDefaultSharedPreferences(context);
         editor = settings.edit();
         String name = settings.getString("display_name", "DEFAULT");
-        System.out.println("Username " + name);
         editText = (EditText) findViewById(R.id.display_name);
         editText.setText(name);
         editText.addTextChangedListener(new TextWatcher() {
@@ -66,6 +66,7 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
             @Override
             public void afterTextChanged(Editable editable) {
                 newName = String.valueOf(editText.getText());
+                changeUserName(String.valueOf(editText.getText()));
             }
         });
         music = (Switch) findViewById(R.id.music);
@@ -112,7 +113,7 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
         soundfxVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                _music.setFXRate(0.01f * seekBar.getProgress());
+                _music.setFXVolume(0.01f * seekBar.getProgress());
                 if (seekBar.getProgress()==0) {
                     editor.putBoolean("soundfx", false);
                     editor.apply();
@@ -145,7 +146,6 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
         if (newName != null) {
             editor.putString("display_name", String.valueOf(editText.getText()));
             editor.apply();
-            changeUserName(String.valueOf(editText.getText()));
         }
     }
 
@@ -153,6 +153,7 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
         MoleStrikeDB db = new MoleStrikeDB(context);
         final SQLiteDatabase dbHelper = db.getWritableDatabase();
         db.updateName(name, dbHelper);
+        MainActivity.dataChanged=true;
     }
 
     @Override
@@ -186,7 +187,7 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
                 if (soundfx.isChecked()) {
                     soundfxVolume.setProgress(50);
                     editor.putFloat("soundfx_volume", 0.5f);
-                    _music.setFXRate(0.5f);
+                    _music.setFXVolume(0.5f);
                     soundfxVolume.setFocusable(true);
                     soundfxVolume.setEnabled(true);
                 }
@@ -201,7 +202,5 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
                 break;
             }
         }
-
-        System.out.println(settings.getFloat("music_volume", 1));
     }
 }

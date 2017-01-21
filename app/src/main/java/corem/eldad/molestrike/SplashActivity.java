@@ -35,16 +35,19 @@ public class SplashActivity extends Activity {
         logUser(settings);
         if(!(settings.getBoolean("active", false))) {
             editor.putBoolean("active", true);
+            editor.putString("display_name", "Player1");
             editor.putBoolean("forestbackground", true);
             editor.putBoolean("desertbackground", false);
             editor.putBoolean("music", true);
             editor.putFloat("music_volume", 1.0f);
             editor.putBoolean("soundfx", true);
             editor.putFloat("soundfx_volume", 1.0f);
-            editor.putString("display_name", "Player1");
+            editor.putBoolean("first_time", true);
+            editor.putBoolean("first_time_devil", true);
+            editor.putBoolean("first_time_angel", true);
+            editor.putBoolean("first_time_rabbit", true);
             editor.apply();
             createUsers();
-            System.out.println("First time!");
         }
         list = new ArrayList();
         getUsers();

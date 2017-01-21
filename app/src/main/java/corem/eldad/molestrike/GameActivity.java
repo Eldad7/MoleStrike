@@ -6,8 +6,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -15,61 +16,90 @@ import android.os.Vibrator;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
+import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import com.crashlytics.android.Crashlytics;
 
 import io.fabric.sdk.android.Fabric;
-
 
 /**
  * Created by eldadc on 20/12/2016.
  */
 
 public class GameActivity extends AppCompatActivity {
-    ImageView current, lifeView;
-    ImageView[] characters;
+    private ImageView current, lifeView;
+    private ImageView[] characters;
     long timer, devilTimer,angelTimer;
     boolean lose = false;
-    Timer counter;
-    int life=3;
-    DevilTimer dcounter;
-    AngelTimer acounter;
-    int j=0,numberOfMoles, background, top=0;
-    ImageView countDownView, pausePlay;
-    TextView count, topScore;
-    AnimationDrawable moleAnimation;
-    boolean started, resumed = false, firstTime = true, devilFirstTime = true, angelFirstTime = true, hitSound;
+    private Timer counter;
+    int life=3, level, j=0,numberOfMoles, background, top=0;
+    private DevilTimer dcounter;
+    private AngelTimer acounter;
+    private RabbitTimer rabbitTimer;
+    float rabbitLocations[];
+    private ImageView countDownView;
+    private TextView count, topScore, instructions;
+    private AnimationDrawable moleAnimation;
+    boolean started, resumed = false, firstTime = true, devilFirstTime = true, angelFirstTime = true,hitSound;
+    boolean firstGame, firstDevil,firstAngel,firstRabbit;
     private Music music;
-    CountDownTimer countDown;
+    private CountDownTimer countDown;
     private SharedPreferences prefs;
-    ConstraintLayout cl;
-    MoleStrikeDB db;
-    int level;
+    private ConstraintLayout cl;
+    private MoleStrikeDB db;
+    private ViewGroup contentView;
+    private Context mContext;
+    private RabbitView rb;
+    long tick = 500;
+    private SharedPreferences.Editor editor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mContext = this;
+        Intent intent = getIntent();
+        Bundle b=intent.getExtras();
+        level = b.getInt("level");
+        top = b.getInt("top");
+        switch (level){
+            case 2: {
+                numberOfMoles = 8;
+                setContentView(R.layout.activity_game_medium);
+                cl = (ConstraintLayout) findViewById(R.id.activity_game_medium);
+                break;
+            }
+            case 3:{
+                numberOfMoles = 10;
+                setContentView(R.layout.activity_game_hard);
+                cl = (ConstraintLayout) findViewById(R.id.activity_game_hard);
+                break;
+            }
+            default:
+                numberOfMoles = 6;
+                setContentView(R.layout.activity_game);
+                cl = (ConstraintLayout) findViewById(R.id.activity_game);
+        }
+        System.out.println(level);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         db = new MoleStrikeDB(this);
         music = new Music(this.getBaseContext(), this);
-        setContentView(R.layout.activity_game);
-        cl = (ConstraintLayout) findViewById(R.id.activity_game);
-        Intent intent = getIntent();
-        Bundle b=intent.getExtras();
-        numberOfMoles = b.getInt("numberOfMoles");
         setTopScore();
-        initViews(numberOfMoles);
-        pausePlay = (ImageView) findViewById(R.id.pause);
-        count = (TextView) findViewById(R.id.count);
-        count.setText("Score: " + String.valueOf(j));
         countDownView = (ImageView) findViewById(R.id.countDownView);
         lifeView = (ImageView) findViewById(R.id.life);
-        for (int i=0; i<numberOfMoles; i++)
-            characters[i].setBackgroundResource(R.drawable.jmole1);
+        contentView = cl;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                initViews(numberOfMoles);
+                getFirstTimers();
+                for (int i = 0; i < numberOfMoles; i++)
+                    characters[i].setBackgroundResource(R.drawable.jmole1);
+            }
+        }).run();
         devilTimer=angelTimer=timer=2500;
         final int three = R.drawable.number3;
         final int two = R.drawable.number2;
@@ -77,7 +107,6 @@ public class GameActivity extends AppCompatActivity {
         countDown = new CountDownTimer(5000,1000){
             @Override
             public void onTick(long l) {
-                System.out.println(l/1000);
                 if (l/1000 == 3){
                     countDownView.setImageResource(three);
                     countDownView.setVisibility(View.VISIBLE);
@@ -93,11 +122,25 @@ public class GameActivity extends AppCompatActivity {
             @Override
             public void onFinish() {
                 countDownView.setVisibility(View.GONE);
-                play();
+                int rand = (int) (Math.random() * 10000);
+                rabbitTimer = new RabbitTimer(((long) rand % 120000),1000);
+                rabbitTimer.start();
+                Play();
             }
         }.start();
         Fabric.with(this, new Crashlytics());
         logUser(prefs);
+    }
+
+    private void getFirstTimers(){
+        if(prefs.getBoolean("first_time", true))
+            firstGame = true;
+        if(prefs.getBoolean("first_time_devil", true))
+            firstDevil = true;
+        if(prefs.getBoolean("first_time_angel", true))
+            firstAngel = true;
+        if(prefs.getBoolean("first_time_rabbit", true))
+            firstRabbit = true;
     }
 
     private void logUser(SharedPreferences settings) {
@@ -111,42 +154,21 @@ public class GameActivity extends AppCompatActivity {
         boolean newHigh = false;
         boolean newLevel = false;
         if (!lose && life < 3 && life > 0)
-            play();
+            Play();
         if (life == 0)
             lose = true;
         if (lose) {
             try {
+                counter.cancel();
                 dcounter.cancel();
                 acounter.cancel();
-                counter.cancel();
+                rabbitTimer.cancel();
             } catch (NullPointerException ignored) {
 
             }
         }
         SQLiteDatabase dbHelper = db.getWritableDatabase();
-        if ((j == top) && (j == 0)) {
-            String whereClause = MoleStrikeDB.player.COLUMN_PLAYER + "=?";
-            String[] whereArgs = {"1"};
-            String[] projection = {
-                    MoleStrikeDB.player.COLUMN_TOP_SCORE,
-                    MoleStrikeDB.player.COLUMN_LEVEL,
-                    MoleStrikeDB.player.COLUMN_PLAYER
-            };
-            Cursor c = dbHelper.query(
-                    MoleStrikeDB.player.TABLE_NAME,                     // The table to query
-                    projection,
-                    whereClause,
-                    whereArgs,
-                    null,
-                    null,
-                    null
-            );
-            c.moveToFirst();
-            top = c.getInt(c.getColumnIndexOrThrow(MoleStrikeDB.player.COLUMN_TOP_SCORE));
-            level = c.getInt(c.getColumnIndexOrThrow(MoleStrikeDB.player.COLUMN_LEVEL));
-            topScore = (TextView) findViewById(R.id.topScore);
-            topScore.setText(String.format(getResources().getString(R.string.top), top));
-        } else if (lose && j > top) {
+        if (lose && j > top) {
             newHigh = true;
             db.updateTopScore(prefs.getString("display_name", "Player1"), j, dbHelper);
             if ((j < 80) && (j > 29))
@@ -179,6 +201,7 @@ public class GameActivity extends AppCompatActivity {
             Bundle bundle = new Bundle();
             bundle.putBoolean("highScore", newHigh);
             bundle.putBoolean("newLevel", newLevel);
+            rabbitTimer.cancel();
             intent.putExtras(bundle);
             registerReceiver(broadcast_receiver, new IntentFilter("finish_activity"));
             startActivity(intent);
@@ -187,26 +210,43 @@ public class GameActivity extends AppCompatActivity {
 
 
     private void initViews(int moles) {
+        DisplayMetrics metrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        rabbitLocations = new float[2];
+        float screenHeight = metrics.heightPixels;
         ImageView topLeft = (ImageView) findViewById(R.id.topLeftMole);
         ImageView bottomLeft = (ImageView) findViewById(R.id.bottomLeftMole);
         ImageView topMiddle = (ImageView) findViewById(R.id.topRightMole);
         ImageView middleMole = (ImageView) findViewById(R.id.MiddleMole);
         ImageView topRight = (ImageView) findViewById(R.id.topMiddleMole);
         ImageView bottomRight = (ImageView) findViewById(R.id.bottomRightMole);
-        if (moles==9){
-            ImageView leftMiddle = (ImageView) findViewById(R.id.leftMiddleMole);
+        rabbitLocations[0] = screenHeight - 300;
+        rabbitLocations[1] = screenHeight - 600;
+        if (moles>7) {
             ImageView bottomMiddleMole = (ImageView) findViewById(R.id.bottomMiddleMole);
             ImageView rightMiddleMole = (ImageView) findViewById(R.id.rightMiddleMole);
-            characters = new ImageView[] {topLeft, bottomLeft, topMiddle, middleMole, topRight, bottomRight, leftMiddle, bottomMiddleMole, rightMiddleMole};
+            if (moles == 10) {
+                ImageView hardTop = (ImageView) findViewById(R.id.hardTop);
+                ImageView hardBottom = (ImageView) findViewById(R.id.hardBottom);
+                characters = new ImageView[]{topLeft, bottomLeft, topMiddle, middleMole, topRight, bottomRight, bottomMiddleMole, rightMiddleMole, hardBottom, hardTop};
+            }
+            else
+                characters = new ImageView[]{topLeft, bottomLeft, topMiddle, middleMole, topRight, bottomRight, bottomMiddleMole, rightMiddleMole};
         }
-        else
-            characters = new ImageView[] {topLeft, bottomLeft, topMiddle, middleMole, topRight, bottomRight};
+        else {
+            characters = new ImageView[]{topLeft, bottomLeft, topMiddle, middleMole, topRight, bottomRight};
+            instructions = (TextView) findViewById(R.id.instructions);
+        }
+        rb = new RabbitView(mContext);
+        count = (TextView) findViewById(R.id.count);
+        count.setText(String.format(getResources().getString(R.string.score), j));
+        topScore = (TextView) findViewById(R.id.topScore);
+        topScore.setText(String.format(getResources().getString(R.string.top), top));
     }
 
     @Override
     protected void onResume(){
         super.onResume();
-        System.out.println("Resuming");
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -216,17 +256,18 @@ public class GameActivity extends AppCompatActivity {
         cl.setBackgroundResource(background);
         if ((resumed) && (current==null))
             countDown.start();
-        else if (resumed)
-            play();
+        else if (resumed) {
+            Play();
+            rabbitTimer.start();
+        }
         resumed = false;
     }
 
     private void togglePrefs(SharedPreferences prefs) {
-        System.out.println(prefs.getBoolean("soundfx", true));
         if (prefs.getBoolean("music", true)) {
             if (!music.musicIsPlaying) {
                 music.run();
-                music.setMusicVolume(100 * prefs.getFloat("music_volume", 1.0f));
+                music.setMusicVolume(prefs.getFloat("music_volume", 1.0f));
             }
         }
         else{
@@ -252,32 +293,54 @@ public class GameActivity extends AppCompatActivity {
         super.onStop();
         if (counter != null)
             counter.cancel();
-        for (int i=0; i<6; i++){
+        if (dcounter != null)
+            dcounter.cancel();
+        if (acounter != null)
+            acounter.cancel();
+        if (rabbitTimer!=null)
+            rabbitTimer.cancel();
+        for (int i=0; i<numberOfMoles; i++){
                 characters[i].setImageResource(android.R.color.transparent);
                 characters[i].setBackgroundResource(R.drawable.jmole1);
         }
     }
 
-    private void play() {
-        started=true;
-        lifeSet(life);
-        int type = 1;
-        int random = (int )(Math.random() * 2000);
-        int character = random;
-        if (character%77 == 0)
-            type = 3;
-
-        if (character%66 == 0){
-            type = 2;
+    private void Play() {
+        if (firstGame){
+            showMole();
+            return;
         }
-        if (!lose) {
+        if (!lose){
+            started=true;
+            lifeSet(life);
+            int type = 1;
+            int random = (int )(Math.random() * 2000);
+            int character = random;
+            if (character%77 == 0)
+                type = 3;
+
+            if (character%66 == 0){
+                type = 2;
+            }
             current = characters[random % numberOfMoles];
             switch (type) {
                 case 2: {
+                    if (firstDevil){
+                        showDevil(current);
+                        return;
+                    }
                     current.setBackgroundResource(R.drawable.goingupdevil);
                     break;
                 }
                 case 3: {
+                    if (firstAngel){
+                        instructions.setText(R.string.angelHit);
+                        instructions.setTextColor(Color.BLACK);
+                        Typeface custom_font = Typeface.createFromAsset(mContext.getAssets(),  "fonts/njnaruto.ttf");
+                        instructions.setTextSize(30.0f);
+                        instructions.setTypeface(custom_font);
+                        instructions.setVisibility(View.VISIBLE);
+                    }
                     current.setBackgroundResource(R.drawable.goingupangel);
                     break;
                 }
@@ -288,24 +351,123 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
+    private void showMole() {
+        current = characters[0];
+        current.setBackgroundResource(R.drawable.goingup);
+        moleAnimation = (AnimationDrawable) current.getBackground();
+        moleAnimation.start();
+        current.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                    if ((event.getAction() == MotionEvent.ACTION_DOWN) && (hitSound)) {
+                        music.playHit();
+                    }
+                    if (event.getAction() == MotionEvent.ACTION_UP) {
+                        instructions.setText(R.string.great);
+                        current.setBackgroundResource(R.drawable.goingdown);
+                        current.setImageResource(R.drawable.pow);
+                        current.setOnTouchListener(null);
+                        moleAnimation = (AnimationDrawable) current.getBackground();
+                        moleAnimation.start();
+                        firstGame = false;
+                        editor = prefs.edit();
+                        editor.putBoolean("first_time", false);
+                        editor.apply();
+                        new CountDownTimer(2000,1000){
+
+                            @Override
+                            public void onTick(long l) {
+
+                            }
+
+                            @Override
+                            public void onFinish() {
+                                instructions.setVisibility(View.GONE);
+                                current.setImageResource(android.R.color.transparent);
+                                count.setText(String.format(getResources().getString(R.string.score), ++j));
+                                Play();
+                            }
+                        }.start();
+                    }
+                    return true;
+                }
+            });
+        instructions.setText(R.string.moleHit);
+        instructions.setTextColor(Color.BLACK);
+        Typeface custom_font = Typeface.createFromAsset(this.getAssets(),  "fonts/njnaruto.ttf");
+        instructions.setTextSize(30.0f);
+        instructions.setTypeface(custom_font);
+        instructions.setVisibility(View.VISIBLE);
+    }
+
+    private void showDevil(final ImageView current){
+        current.setBackgroundResource(R.drawable.goingupdevil);
+        moleAnimation = (AnimationDrawable) current.getBackground();
+        moleAnimation.start();
+        final int[] devilHit = {0};
+        current.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if ((event.getAction() == MotionEvent.ACTION_DOWN) && (hitSound)) {
+                    music.playHit();
+                }
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                    ++devilHit[0];
+                    if (devilHit[0] ==3 ) {
+                        instructions.setText(R.string.great);
+                        current.setBackgroundResource(R.drawable.goingdowndevil);
+                        current.setImageResource(R.drawable.pow);
+                        current.setOnTouchListener(null);
+                        moleAnimation = (AnimationDrawable) current.getBackground();
+                        moleAnimation.start();
+                        firstDevil = false;
+                        editor = prefs.edit();
+                        editor.putBoolean("first_time_devil", false);
+                        editor.apply();
+                        new CountDownTimer(2000, 1000) {
+
+                            @Override
+                            public void onTick(long l) {
+
+                            }
+
+                            @Override
+                            public void onFinish() {
+                                instructions.setVisibility(View.GONE);
+                                current.setImageResource(android.R.color.transparent);
+                                j += 5;
+                                count.setText(String.format(getResources().getString(R.string.score), j));
+                                Play();
+                            }
+                        }.start();
+                    }
+                }
+                return true;
+            }
+        });
+        counter = new Timer(timer, tick);
+        instructions.setText(R.string.hitDevil);
+        instructions.setTextColor(Color.BLACK);
+        Typeface custom_font = Typeface.createFromAsset(this.getAssets(),  "fonts/njnaruto.ttf");
+        instructions.setTextSize(30.0f);
+        instructions.setTypeface(custom_font);
+        instructions.setVisibility(View.VISIBLE);
+    }
+
     private void startTransition(ImageView current, int type) {
-        System.out.println("Transitioning");
         moleAnimation = (AnimationDrawable) current.getBackground();
         moleAnimation.start();
         switch (type){
             case 1: {
-                System.out.println("Case 1");
                 current.setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         if (started) {
                             if ((event.getAction() == MotionEvent.ACTION_DOWN) && (hitSound)) {
                                 music.playHit();
-                                Vibrator vibrate = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
-                                vibrate.vibrate(500);
                             }
                             if (event.getAction() == MotionEvent.ACTION_UP)
-                                GameOn(1);
+                                gameOn(1);
                             return true;
                         }
                         return false;
@@ -313,8 +475,7 @@ public class GameActivity extends AppCompatActivity {
                 });
                 if (firstTime) {
                     firstTime = false;
-                    counter = new Timer(timer, 1000);
-
+                    counter = new Timer(timer, tick);
                 } else
                     counter.setMillisInFuture(timer);
                 counter.setClicked(false);
@@ -326,13 +487,11 @@ public class GameActivity extends AppCompatActivity {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         if (started) {
-                            if ((event.getAction() == MotionEvent.ACTION_DOWN) && (hitSound)) {
+                            if ((event.getAction() == MotionEvent.ACTION_DOWN) && (hitSound) && (!rb.getHit())) {
                                 music.playHit();
-                                Vibrator vibrate = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
-                                vibrate.vibrate(500);
                             }
                             if (event.getAction() == MotionEvent.ACTION_UP)
-                                GameOn(2);
+                                gameOn(2);
                             return true;
                         }
                         return false;
@@ -340,7 +499,7 @@ public class GameActivity extends AppCompatActivity {
                 });
                 if (devilFirstTime) {
                     devilFirstTime = false;
-                    dcounter = new DevilTimer(timer, 1000);
+                    dcounter = new DevilTimer(timer, tick);
                 } else {
                     dcounter.setMillisInFuture(timer);
                 }
@@ -352,13 +511,13 @@ public class GameActivity extends AppCompatActivity {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         if (started) {
-                            if ((event.getAction() == MotionEvent.ACTION_DOWN) && (hitSound)) {
+                            if ((event.getAction() == MotionEvent.ACTION_DOWN) && (hitSound) && (!rb.getHit())) {
                                 music.playHit();
                                 Vibrator vibrate = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
                                 vibrate.vibrate(500);
                             }
                             if (event.getAction() == MotionEvent.ACTION_UP)
-                                GameOn(3);
+                                gameOn(3);
                             return true;
                         }
                         return false;
@@ -366,7 +525,7 @@ public class GameActivity extends AppCompatActivity {
                 });
                 if (angelFirstTime) {
                     angelFirstTime = false;
-                    acounter = new AngelTimer(timer, 1000);
+                    acounter = new AngelTimer(timer, tick);
                 } else
                     acounter.setMillisInFuture(timer);
                 acounter.setClicked(false);
@@ -376,10 +535,10 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
-    private void GameOn(int type) {
+    private void gameOn(int type) {
         switch (type){
             case 1: {
-                if (!counter.getClicked()) {
+                if (!counter.getClicked() && !rb.getHit()) {
                     current.setImageResource(R.drawable.pow);
                     current.setBackgroundResource(R.drawable.goingdown);
                     current.setOnTouchListener(null);
@@ -393,8 +552,7 @@ public class GameActivity extends AppCompatActivity {
             }
                 break;
             case 2: {
-                System.out.println("Case 2");
-                    if (dcounter.getClicked()) {
+                    if (dcounter.getClicked() && !rb.getHit()) {
                         current.setBackgroundResource(R.drawable.goingdowndevil);
                         current.setImageResource(R.drawable.pow);
                         current.setOnTouchListener(null);
@@ -409,12 +567,21 @@ public class GameActivity extends AppCompatActivity {
                     break;
                 }
             case 3: {
-                current.setImageResource(R.drawable.pow);
-                current.setBackgroundResource(R.drawable.goingdownangel);
-                current.setOnTouchListener(null);
-                moleAnimation = (AnimationDrawable) current.getBackground();
-                moleAnimation.start();
-                acounter.setClicked(true);
+                if (firstAngel) {
+                    instructions.setVisibility(View.GONE);
+                    firstAngel = false;
+                    editor = prefs.edit();
+                    editor.putBoolean("first_time_angel", false);
+                    editor.apply();
+                }
+                if (!rb.getHit()) {
+                    current.setImageResource(R.drawable.pow);
+                    current.setBackgroundResource(R.drawable.goingdownangel);
+                    current.setOnTouchListener(null);
+                    moleAnimation = (AnimationDrawable) current.getBackground();
+                    moleAnimation.start();
+                    acounter.setClicked(true);
+                }
             }
         }
             if (j>top)
@@ -443,10 +610,11 @@ public class GameActivity extends AppCompatActivity {
     @Override
     public void onBackPressed(){
         try {
+            countDown.cancel();
+            rabbitTimer.cancel();
             dcounter.cancel();
             acounter.cancel();
             counter.cancel();
-            countDown.cancel();
         } catch (NullPointerException ignored) {
 
         }
@@ -455,7 +623,7 @@ public class GameActivity extends AppCompatActivity {
         finish();
     }
 
-    public void pause(View view) {
+    public void Pause(View view) {
         resumed = true;
         if (current != null)
             current.setOnTouchListener(null);
@@ -492,7 +660,6 @@ public class GameActivity extends AppCompatActivity {
         }
 
         void setClicked(boolean clicked){
-            System.out.println("Clicked = "+clicked);
             this.clicked = clicked;
         }
 
@@ -505,7 +672,8 @@ public class GameActivity extends AppCompatActivity {
         }
         public void onFinish() {
             if ((!clicked) && (!resumed)) {
-                System.out.println("Lose");
+                Vibrator vibrate = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
+                vibrate.vibrate(500);
                 life--;
                 setClicked(true);
                 current.setBackgroundResource(R.drawable.goingdown);
@@ -517,8 +685,7 @@ public class GameActivity extends AppCompatActivity {
             }
             else{
                 current.setImageResource(android.R.color.transparent);
-                System.out.println("Still playing");
-                play();
+                Play();
             }
             finished = true;
         }
@@ -543,7 +710,6 @@ public class GameActivity extends AppCompatActivity {
         void setClicked(){
             if (++hits==2)
                 this.clicked = true;
-            System.out.println(hits);
         }
 
         boolean getClicked(){
@@ -555,6 +721,8 @@ public class GameActivity extends AppCompatActivity {
         }
         public void onFinish() {
             if ((!clicked) && (!resumed)) {
+                Vibrator vibrate = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
+                vibrate.vibrate(500);
                 life--;
                 resetHits();
                 current.setBackgroundResource(R.drawable.goingdowndevil);
@@ -568,7 +736,7 @@ public class GameActivity extends AppCompatActivity {
                 current.setImageResource(android.R.color.transparent);
                 clicked=false;
                 resetHits();
-                play();
+                Play();
             }
             finished = true;
         }
@@ -594,7 +762,6 @@ public class GameActivity extends AppCompatActivity {
         }
 
         void setClicked(boolean clicked){
-            System.out.println("Clicked = "+clicked);
             this.clicked = clicked;
             if (this.clicked) {
                 life--;
@@ -611,14 +778,75 @@ public class GameActivity extends AppCompatActivity {
                 setTopScore();
             }
             else{
+                if (firstAngel) {
+                    instructions.setVisibility(View.GONE);
+                    firstAngel = false;
+                    editor = prefs.edit();
+                    editor.putBoolean("first_time_angel", false);
+                    editor.apply();
+                }
                 current.setBackgroundResource(R.drawable.goingdownangel);
                 moleAnimation = (AnimationDrawable) current.getBackground();
                 moleAnimation.start();
-
                 current.setOnTouchListener(null);
-                play();
+                Play();
             }
             finished = true;
+        }
+    }
+
+    private class RabbitTimer extends MyCountDownTimer {
+        long mMillisInFuture;
+
+        RabbitTimer(long millisInFuture, long countDownInterval) {
+            super(millisInFuture, countDownInterval);
+            mMillisInFuture = millisInFuture;
+        }
+
+        public void setMillisInFuture(long millisInFuture) {
+            super.setMillisInFuture(millisInFuture);
+            mMillisInFuture = millisInFuture;
+        }
+
+        public void onTick(long millisUntilFinished) {
+
+        }
+
+        public void onFinish() {
+            int rand = (int) (Math.random() * 2000);
+            if (rb!=null) {
+                if (firstRabbit) {
+                    final TextView rabbitInstructions = (TextView) findViewById(R.id.rabbitInstructions);
+                    rabbitInstructions.setText(R.string.rabbitsHit);
+                    rabbitInstructions.setTextColor(Color.BLACK);
+                    Typeface custom_font = Typeface.createFromAsset(mContext.getAssets(),  "fonts/njnaruto.ttf");
+                    rabbitInstructions.setTextSize(30.0f);
+                    rabbitInstructions.setTypeface(custom_font);
+                    rabbitInstructions.setVisibility(View.VISIBLE);
+                    new CountDownTimer(4500, 1000){
+
+                        @Override
+                        public void onTick(long l) {
+
+                        }
+
+                        @Override
+                        public void onFinish() {
+                            firstRabbit = false;
+                            editor = prefs.edit();
+                            editor.putBoolean("first_time_rabbit", false);
+                            editor.apply();
+                            rabbitInstructions.setVisibility(View.GONE);
+                        }
+                    }.start();
+                }
+                rb = new RabbitView(mContext);
+                rb.setY(rabbitLocations[rand % 2]);
+                contentView.addView(rb);
+                rb.Move(4500, rand % 2);
+            }
+            setMillisInFuture((rand * 1000) % 20000);
+            start();
         }
     }
 }

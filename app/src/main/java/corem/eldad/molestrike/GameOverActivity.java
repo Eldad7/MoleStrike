@@ -12,6 +12,11 @@ import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 
+/**Created by Eldad Corem
+ * The Handler is used in order to give the Gameover screen to be visible
+ * Since only then I sent the broadcast to finish GameActivity, the onBackPressed is to fix side effects
+ */
+
 public class GameOverActivity extends AppCompatActivity {
 
     SharedPreferences prefs;
@@ -51,19 +56,14 @@ public class GameOverActivity extends AppCompatActivity {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                if (level){
+                    newLevel.setVisibility(View.VISIBLE);
+                    newLevel.startAnimation(AnimationUtils.loadAnimation(context, R.anim.gameovertext));
+                }
                 if (newHighScore) {
                     highScore.setVisibility(View.VISIBLE);
                     highScore.startAnimation(AnimationUtils.loadAnimation(context, R.anim.gameovertext));
                     MainActivity.dataChanged = true;
-                    try {
-                        Thread.sleep(1500);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-                if (level){
-                    newLevel.setVisibility(View.VISIBLE);
-                    newLevel.startAnimation(AnimationUtils.loadAnimation(context, R.anim.gameovertext));
                 }
             }
         }).start();
@@ -79,6 +79,7 @@ public class GameOverActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed(){
+        sendBroadcast(intent);
         finish();
     }
 }

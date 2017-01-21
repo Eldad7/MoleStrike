@@ -21,6 +21,12 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.os.Handler;
 
+/**This is the original Android interface, which I wanted to manipulate by adding "setMillisInFuture" function
+ * This function changes the millis for the next time the countdown will end.
+ * I use it to manipulate the time the moles are on the screen
+ * Since this is an interface, the game activity has 4 classes that implement this interface
+ *
+ */
 
 /**
  * Schedule a countdown until a time in the future, with
