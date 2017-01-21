@@ -28,6 +28,13 @@ import io.fabric.sdk.android.Fabric;
 
 /**
  * Created by eldadc on 20/12/2016.
+ *
+ * This activity is the main game activity. the function Play is the beginning of each round.
+ * setTransition assigns the animation to the correct view and starts the counter
+ * gameOn is the function that is calls when the timer is over. it checks if you have clicked the mole or not.
+ * If you didn't - you lose a life.
+ * setTopScore actually sets the top score but also it is the one that fires the GameOverActivity call, in case you have lost.
+ * The show functions (Mole\Devil) happens only the first time the user encounters a mole\devilMole, to explain to him what to do
  */
 
 public class GameActivity extends AppCompatActivity {
