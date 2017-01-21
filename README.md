@@ -1,4 +1,4 @@
-# MoleStrike
+# MoleStrike by Eldad Corem
 Final project in IntroductionToMobile
 
 App Name: MoleStrike
@@ -18,7 +18,7 @@ https://docs.google.com/document/d/1C_Kfbmn48DvBQsRXbXzn-_AOCCAxk2lAl72OuV5CFB0/
 
 
 #App Icon - <img src="/forGooglePlay/icon.png" width="144">
-#Promo/Featured graphics -  <img src="/forGooglePlay/PromoFeatured.png" width="144">
+#Promo/Featured graphics -  <img src="/forGooglePlay/PromoFeatured.jpg" width="144">
 #InGame:
   <img src="/forGooglePlay/inGame1.jpg" width="144">
   <img src="/forGooglePlay/inGame2.jpg" width="144">
