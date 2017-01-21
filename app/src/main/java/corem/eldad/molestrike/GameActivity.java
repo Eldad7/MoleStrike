@@ -679,8 +679,10 @@ public class GameActivity extends AppCompatActivity {
         }
         public void onFinish() {
             if ((!clicked) && (!resumed)) {
-                Vibrator vibrate = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
-                vibrate.vibrate(500);
+                if (hitSound) {
+                    Vibrator vibrate = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
+                    vibrate.vibrate(500);
+                }
                 life--;
                 setClicked(true);
                 current.setBackgroundResource(R.drawable.goingdown);
@@ -728,8 +730,10 @@ public class GameActivity extends AppCompatActivity {
         }
         public void onFinish() {
             if ((!clicked) && (!resumed)) {
-                Vibrator vibrate = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
-                vibrate.vibrate(500);
+                if (hitSound) {
+                    Vibrator vibrate = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
+                    vibrate.vibrate(500);
+                }
                 life--;
                 resetHits();
                 current.setBackgroundResource(R.drawable.goingdowndevil);
