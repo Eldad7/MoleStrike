@@ -85,8 +85,15 @@ public class MainActivity extends AppCompatActivity {
         button = (Button) findViewById(R.id.button);
         Typeface custom_font = Typeface.createFromAsset(this.getAssets(),  "fonts/njnaruto.ttf");
         button.setTypeface(custom_font);
-        button.setTextColor(Color.BLACK);
+        button.setTextColor(Color.WHITE);
         topScore = (TextView) findViewById(R.id.topScore);
+    }
+
+    @Override
+    protected void onStop(){
+        super.onStop();
+        if (music.getMusicIsPlaying())
+            music.pause();
     }
 
     @Override
@@ -218,7 +225,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void showscoreboard(View view) {
-                view.startAnimation(AnimationUtils.loadAnimation(this, R.anim.imageclick));
+        view.startAnimation(AnimationUtils.loadAnimation(this, R.anim.imageclick));
         if(mListView.getVisibility() == View.GONE) {
             mListView.startAnimation(AnimationUtils.loadAnimation(this, R.anim.leaderboard_animation_in));
             mListView.setVisibility(View.VISIBLE);

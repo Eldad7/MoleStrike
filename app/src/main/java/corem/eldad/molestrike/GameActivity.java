@@ -342,7 +342,7 @@ public class GameActivity extends AppCompatActivity {
                 case 3: {
                     if (firstAngel){
                         instructions.setText(R.string.angelHit);
-                        instructions.setTextColor(Color.BLACK);
+                        instructions.setTextColor(Color.WHITE);
                         Typeface custom_font = Typeface.createFromAsset(mContext.getAssets(),  "fonts/njnaruto.ttf");
                         instructions.setTextSize(30.0f);
                         instructions.setTypeface(custom_font);
@@ -400,7 +400,7 @@ public class GameActivity extends AppCompatActivity {
                 }
             });
         instructions.setText(R.string.moleHit);
-        instructions.setTextColor(Color.BLACK);
+        instructions.setTextColor(Color.WHITE);
         Typeface custom_font = Typeface.createFromAsset(this.getAssets(),  "fonts/njnaruto.ttf");
         instructions.setTextSize(30.0f);
         instructions.setTypeface(custom_font);
@@ -454,7 +454,7 @@ public class GameActivity extends AppCompatActivity {
         });
         counter = new Timer(timer, tick);
         instructions.setText(R.string.hitDevil);
-        instructions.setTextColor(Color.BLACK);
+        instructions.setTextColor(Color.WHITE);
         Typeface custom_font = Typeface.createFromAsset(this.getAssets(),  "fonts/njnaruto.ttf");
         instructions.setTextSize(30.0f);
         instructions.setTypeface(custom_font);
@@ -829,7 +829,7 @@ public class GameActivity extends AppCompatActivity {
                 if (firstRabbit) {
                     final TextView rabbitInstructions = (TextView) findViewById(R.id.rabbitInstructions);
                     rabbitInstructions.setText(R.string.rabbitsHit);
-                    rabbitInstructions.setTextColor(Color.BLACK);
+                    rabbitInstructions.setTextColor(Color.WHITE);
                     Typeface custom_font = Typeface.createFromAsset(mContext.getAssets(),  "fonts/njnaruto.ttf");
                     rabbitInstructions.setTextSize(30.0f);
                     rabbitInstructions.setTypeface(custom_font);
