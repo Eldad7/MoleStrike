@@ -242,13 +242,13 @@ public class GameActivity extends AppCompatActivity {
         }
         else {
             characters = new ImageView[]{topLeft, bottomLeft, topMiddle, middleMole, topRight, bottomRight};
-            instructions = (TextView) findViewById(R.id.instructions);
         }
         rb = new RabbitView(mContext);
         count = (TextView) findViewById(R.id.count);
         count.setText(String.format(getResources().getString(R.string.score), j));
         topScore = (TextView) findViewById(R.id.topScore);
         topScore.setText(String.format(getResources().getString(R.string.top), top));
+        instructions = (TextView) findViewById(R.id.instructions);
     }
 
     @Override
