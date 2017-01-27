@@ -58,10 +58,10 @@ public class Music implements Runnable, MediaPlayer.OnCompletionListener{
     }
 
     public void pause(){
+        setMusicIsPlaying(false);
         mPlayer.stop();
         mPlayer.release();
         mPlayer = null;
-        setMusicIsPlaying(false);
     }
 
     public boolean getMusicIsPlaying(){ return musicIsPlaying;}

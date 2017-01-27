@@ -59,7 +59,6 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = getIntent();
         Bundle b = intent.getExtras();
         mList = b.getStringArrayList("list");
-
         music = new Music(this.getBaseContext(), this);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         cl = (ConstraintLayout) findViewById(R.id.activity_main);
@@ -167,8 +166,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed(){
-        if (music.getMusicIsPlaying())
-            music.setMusicIsPlaying(false);
+        if (music.getMusicIsPlaying()) {
+            music.pause();
+        }
     }
 
     @Override
