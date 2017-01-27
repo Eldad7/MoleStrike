@@ -169,6 +169,7 @@ public class MainActivity extends AppCompatActivity {
         if (music.getMusicIsPlaying()) {
             music.pause();
         }
+        super.onBackPressed();
     }
 
     @Override
