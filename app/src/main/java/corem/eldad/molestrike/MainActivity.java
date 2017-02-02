@@ -3,6 +3,9 @@ package corem.eldad.molestrike;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
@@ -11,6 +14,8 @@ import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.preference.PreferenceManager;
+import android.util.Base64;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.widget.BaseAdapter;
@@ -19,8 +24,12 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.crashlytics.android.Crashlytics;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import io.fabric.sdk.android.Fabric;
+import com.facebook.FacebookSdk;
+import com.facebook.appevents.AppEventsLogger;
 
 /**
  * @author ©EldadC
@@ -58,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
         db = new MoleStrikeDB(this);
         Intent intent = getIntent();
         Bundle b = intent.getExtras();
+        facebookIntergration();
         mList = b.getStringArrayList("list");
         music = new Music(this.getBaseContext(), this);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -86,6 +96,22 @@ public class MainActivity extends AppCompatActivity {
         button.setTypeface(custom_font);
         button.setTextColor(Color.WHITE);
         topScore = (TextView) findViewById(R.id.topScore);
+    }
+
+    private void facebookIntergration() {
+        FacebookSdk.getApplicationContext();
+        AppEventsLogger.activateApp(this);
+        try {
+            PackageInfo info = getPackageManager().getPackageInfo(
+                    getPackageName(), PackageManager.GET_SIGNATURES);
+            for (Signature signature : info.signatures) {
+                MessageDigest md = MessageDigest.getInstance("SHA");
+                md.update(signature.toByteArray());
+                Log.d("KeyHash:", Base64.encodeToString(md.digest(), Base64.DEFAULT));
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+        } catch (NoSuchAlgorithmException e) {
+        }
     }
 
     @Override

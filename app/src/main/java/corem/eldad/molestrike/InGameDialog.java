@@ -20,13 +20,13 @@ public class InGameDialog extends Dialog implements android.view.View.OnClickLis
 
 
     public Activity c;
-    public Dialog d;
     private Switch music, soundfx;
-    private ImageButton play;
+    private ImageButton play, exit;
     private Context context;
     private SharedPreferences settings;
     private SharedPreferences.Editor editor;
     private Music _music;
+    static boolean quit = false;
 
     public InGameDialog(Context context, Music _music) {
         super(context);
@@ -62,6 +62,8 @@ public class InGameDialog extends Dialog implements android.view.View.OnClickLis
         }
         play = (ImageButton) findViewById(R.id.resumeGame);
         play.setOnClickListener(this);
+        exit = (ImageButton) findViewById(R.id.exitGame);
+        exit.setOnClickListener(this);
     }
 
     @Override
@@ -111,6 +113,13 @@ public class InGameDialog extends Dialog implements android.view.View.OnClickLis
                 dismiss();
                 break;
             }
+            case R.id.exitGame: {
+                quit = true;
+                dismiss();
+                break;
+            }
         }
     }
+
+    public boolean getQuit(){return quit;}
 }

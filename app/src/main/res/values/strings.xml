@@ -13,6 +13,12 @@
     <string name="hitDevil">Hit the devil three times to knock it down!</string>
     <string name="angelHit">DON\'T HIT THE ANGEL!</string>
     <string name="rabbitsHit">Rabbits will try to defend the moles!</string>
+    <string name="facebook_app_id">1352239961463906</string>
+    <string name="fb_login_protocol_scheme">fb1352239961463906</string>
+    <string name="error">error</string>
+    <string name="success">success</string>
+    <string name="successfully_posted_post">Successfully posted post!</string>
+    <string name="ok">ok</string>
 
     <string-array name="themes_array_titles">
         <item>Forest</item>

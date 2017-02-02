@@ -616,18 +616,7 @@ public class GameActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed(){
-        try {
-            countDown.cancel();
-            rabbitTimer.cancel();
-            dcounter.cancel();
-            acounter.cancel();
-            counter.cancel();
-        } catch (NullPointerException ignored) {
-
-        }
-        if (music.getMusicIsPlaying())
-            music.pause();
-        finish();
+        Pause(findViewById(R.id.pause));
     }
 
     public void Pause(View view) {
@@ -640,11 +629,26 @@ public class GameActivity extends AppCompatActivity {
             countDown.cancel();
         }
         countDownView.setVisibility(View.GONE);
-        InGameDialog igd = new InGameDialog(this,music);
+        final InGameDialog igd = new InGameDialog(this,music);
         igd.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialogInterface) {
-                onResume();
+                if (igd.getQuit()) {
+                    try {
+                        countDown.cancel();
+                        rabbitTimer.cancel();
+                        dcounter.cancel();
+                        acounter.cancel();
+                        counter.cancel();
+                    } catch (NullPointerException ignored) {
+
+                    }
+                    if (music.getMusicIsPlaying())
+                        music.pause();
+                    finish();
+                }
+                else
+                    onResume();
             }
         });
         igd.show();

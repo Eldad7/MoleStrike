@@ -1,6 +1,7 @@
 package corem.eldad.molestrike;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Handler;
@@ -10,22 +11,28 @@ import android.os.Bundle;
 import android.support.v7.preference.PreferenceManager;
 import android.view.View;
 import android.view.animation.AnimationUtils;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import com.facebook.*;
+import com.facebook.share.widget.ShareButton;
 
 /**Created by Eldad Corem
  * The Handler is used in order to give the Gameover screen to be visible
  * Since only then I sent the broadcast to finish GameActivity, the onBackPressed is to fix side effects
  */
 
-public class GameOverActivity extends AppCompatActivity {
+public class GameOverActivity extends AppCompatActivity implements View.OnClickListener {
 
     SharedPreferences prefs;
     ConstraintLayout cl;
+    ImageButton Continue;
+    ShareButton share;
     ImageView highScore, newLevel;
-    boolean newHighScore,level;
+    boolean newHighScore,level, handler=true;
     int background;
     Context context;
     Music music;
+    CallbackManager callbackManager;
     Intent intent;
 
     @Override
@@ -40,6 +47,8 @@ public class GameOverActivity extends AppCompatActivity {
         newHighScore = b.getBoolean("highScore");
         highScore = (ImageView) findViewById(R.id.highScore);
         newLevel = (ImageView) findViewById(R.id.newLevel);
+        share = (ShareButton) findViewById(R.id.share_button);
+        Continue = (ImageButton) findViewById(R.id.Continue);
         context = this;
         music = new Music(this.getBaseContext(), this);
     }
@@ -57,8 +66,13 @@ public class GameOverActivity extends AppCompatActivity {
             @Override
             public void run() {
                 if (level){
+                    handler=false;
                     newLevel.setVisibility(View.VISIBLE);
                     newLevel.startAnimation(AnimationUtils.loadAnimation(context, R.anim.gameovertext));
+                    share.setVisibility(View.VISIBLE);
+                    share.setOnClickListener(GameOverActivity.this);
+                    Continue.setVisibility(View.VISIBLE);
+                    Continue.setOnClickListener(GameOverActivity.this);
                 }
                 if (newHighScore) {
                     highScore.setVisibility(View.VISIBLE);
@@ -67,19 +81,47 @@ public class GameOverActivity extends AppCompatActivity {
                 }
             }
         }).start();
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Intent intent = new Intent("finish_activity");
-                sendBroadcast(intent);
-                finish();
-            }
-        },4000);
+        if (handler){
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    Intent intent = new Intent("finish_activity");
+                    sendBroadcast(intent);
+                    finish();
+                }
+            },4000);
+        }
     }
 
     @Override
     public void onBackPressed(){
         sendBroadcast(intent);
         finish();
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()){
+            case R.id.Continue:{
+                Intent intent = new Intent("finish_activity");
+                sendBroadcast(intent);
+                finish();
+                break;
+            }
+            case R.id.share_button:{
+                FacebookDialog fd = new FacebookDialog(this);
+                fd.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialogInterface) {
+                        Intent intent = new Intent("finish_activity");
+                        sendBroadcast(intent);
+                        finish();
+                    }
+                });
+                fd.show();
+
+            }
+        }
+
     }
 }
