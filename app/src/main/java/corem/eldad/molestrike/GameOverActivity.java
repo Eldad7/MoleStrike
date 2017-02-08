@@ -109,16 +109,6 @@ public class GameOverActivity extends AppCompatActivity implements View.OnClickL
                 break;
             }
             case R.id.share_button:{
-                FacebookDialog fd = new FacebookDialog(this);
-                fd.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                    @Override
-                    public void onDismiss(DialogInterface dialogInterface) {
-                        Intent intent = new Intent("finish_activity");
-                        sendBroadcast(intent);
-                        finish();
-                    }
-                });
-                fd.show();
 
             }
         }

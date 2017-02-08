@@ -1,5 +1,6 @@
 package corem.eldad.molestrike;
 
+import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Intent;
@@ -9,9 +10,14 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.util.DisplayMetrics;
+import android.view.View;
+import android.view.animation.DecelerateInterpolator;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 import com.crashlytics.android.Crashlytics;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,9 +32,12 @@ public class SplashActivity extends Activity {
     int level, score;
     String name;
     ArrayList list;
+    ProgressBar pb;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        this.setContentView(R.layout.splash_helper);
+        pb = (ProgressBar) findViewById(R.id.progressBar);
         Fabric.with(this, new Crashlytics());
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = settings.edit();
@@ -46,6 +55,7 @@ public class SplashActivity extends Activity {
             editor.putBoolean("first_time_devil", true);
             editor.putBoolean("first_time_angel", true);
             editor.putBoolean("first_time_rabbit", true);
+            editor.putBoolean("google_play_services", false);
             editor.apply();
             createUsers();
         }
@@ -58,6 +68,11 @@ public class SplashActivity extends Activity {
                 Bundle b = new Bundle();
                 b.putStringArrayList("list",list);
                 intent.putExtras(b);
+                pb.setProgress(100);
+                ObjectAnimator animation = ObjectAnimator.ofInt(pb, "progress", pb.getProgress());
+                animation.setDuration(1500); // 1.5 seconds
+                animation.setInterpolator(new DecelerateInterpolator());
+                animation.start();
                 startActivity(intent);
                 finish();
             }
@@ -89,8 +104,12 @@ public class SplashActivity extends Activity {
             values.put(MoleStrikeDB.player.COLUMN_PLAYER, 0);
             dbHelper.insert(MoleStrikeDB.player.TABLE_NAME, null, values);
         }
-
         dbHelper.close();
+        pb.setProgress(30);
+        ObjectAnimator animation = ObjectAnimator.ofInt(pb, "progress", pb.getProgress());
+        animation.setDuration(500); // 0.5 second
+        animation.setInterpolator(new DecelerateInterpolator());
+        animation.start();
     }
 
     private void logUser(SharedPreferences settings) {
@@ -98,6 +117,11 @@ public class SplashActivity extends Activity {
         // You can call any combination of these three methods
         Crashlytics.setUserEmail(settings.getString("display_name", "Player1") + "@fabric.io");
         Crashlytics.setUserName(settings.getString("display_name", "Player1"));
+        pb.setProgress(50);
+        ObjectAnimator animation = ObjectAnimator.ofInt(pb, "progress", pb.getProgress());
+        animation.setDuration(500);
+        animation.setInterpolator(new DecelerateInterpolator());
+        animation.start();
     }
 
     public void getUsers() {
@@ -126,5 +150,10 @@ public class SplashActivity extends Activity {
             c.moveToNext();
         }
         dbHelper.close();
+        pb.setProgress(75);
+        ObjectAnimator animation = ObjectAnimator.ofInt(pb, "progress", pb.getProgress());
+        animation.setDuration(1500); //
+        animation.setInterpolator(new DecelerateInterpolator());
+        animation.start();
     }
 }

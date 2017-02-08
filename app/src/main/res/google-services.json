@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "624122609712",
+    "project_id": "mole-strike-37373695"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:624122609712:android:4da16cdbacac0e3f",
+        "android_client_info": {
+          "package_name": "corem.eldad.molestrike"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "624122609712-npqhljd4idal7ovs6fhf1bbi157qjuob.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6e7XPaNTboE2NtRtntzPze2Zwt5nwS6M"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

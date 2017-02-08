@@ -19,6 +19,7 @@
     <string name="success">success</string>
     <string name="successfully_posted_post">Successfully posted post!</string>
     <string name="ok">ok</string>
+    <string name="app_id">158541207937</string>
 
     <string-array name="themes_array_titles">
         <item>Forest</item>

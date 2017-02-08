@@ -3,19 +3,17 @@ package corem.eldad.molestrike;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.Signature;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.net.Uri;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.preference.PreferenceManager;
-import android.util.Base64;
-import android.util.Log;
 import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.widget.BaseAdapter;
@@ -24,12 +22,15 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.crashlytics.android.Crashlytics;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.auth.api.signin.GoogleSignInResult;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.games.Games;
 import java.util.ArrayList;
 import io.fabric.sdk.android.Fabric;
-import com.facebook.FacebookSdk;
-import com.facebook.appevents.AppEventsLogger;
 
 /**
  * @author ©EldadC
@@ -44,7 +45,7 @@ import com.facebook.appevents.AppEventsLogger;
  * (changed your user name) or when you've reached a new high score and unlocked a new level
  */
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     MoleStrikeDB db;
     private SharedPreferences prefs;
     private String name;
@@ -57,8 +58,10 @@ public class MainActivity extends AppCompatActivity {
     private Button button;
     private TextView topScore;
     private ArrayList<String> mList;
-    public static boolean dataChanged = false;
+    public static boolean dataChanged = false, gps = false;
     private LeaderBoardAdapter listAdapter;
+    public static GoogleApiClient mGoogleApiClient;
+    private static final int RC_SIGN_IN = 9001;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +70,6 @@ public class MainActivity extends AppCompatActivity {
         db = new MoleStrikeDB(this);
         Intent intent = getIntent();
         Bundle b = intent.getExtras();
-        facebookIntergration();
         mList = b.getStringArrayList("list");
         music = new Music(this.getBaseContext(), this);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -82,6 +84,12 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(this, "Hello " + name, Toast.LENGTH_SHORT).show();
         Fabric.with(this, new Crashlytics());
         logUser(prefs);
+        /*mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .enableAutoManage(this *//* FragmentActivity *//*,
+                        this *//* OnConnectionFailedListener *//*)
+                .addApi(Games.API)
+                .addScope(Games.SCOPE_GAMES)
+                .build();*/
         mListView = (ListView) findViewById(R.id.list);
         new Thread(new Runnable() {
             @Override
@@ -96,22 +104,15 @@ public class MainActivity extends AppCompatActivity {
         button.setTypeface(custom_font);
         button.setTextColor(Color.WHITE);
         topScore = (TextView) findViewById(R.id.topScore);
-    }
-
-    private void facebookIntergration() {
-        FacebookSdk.getApplicationContext();
-        AppEventsLogger.activateApp(this);
-        try {
-            PackageInfo info = getPackageManager().getPackageInfo(
-                    getPackageName(), PackageManager.GET_SIGNATURES);
-            for (Signature signature : info.signatures) {
-                MessageDigest md = MessageDigest.getInstance("SHA");
-                md.update(signature.toByteArray());
-                Log.d("KeyHash:", Base64.encodeToString(md.digest(), Base64.DEFAULT));
-            }
-        } catch (PackageManager.NameNotFoundException e) {
-        } catch (NoSuchAlgorithmException e) {
-        }
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .build();
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .enableAutoManage(this, this)
+                .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
+                /*.addApi(Games.API)
+                .addScope(Games.SCOPE_GAMES)*/
+                .build();
     }
 
     @Override
@@ -175,6 +176,8 @@ public class MainActivity extends AppCompatActivity {
             getUpdatedList();
         }
         topScore.setText(String.format(getResources().getString(R.string.top), score));
+        if (prefs.getBoolean("google_play_services", false))
+        {}
     }
 
     public void chooseLevel(View view){
@@ -195,7 +198,7 @@ public class MainActivity extends AppCompatActivity {
         if (music.getMusicIsPlaying()) {
             music.pause();
         }
-        super.onBackPressed();
+        moveTaskToBack(true);
     }
 
     @Override
@@ -217,15 +220,61 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void settingsMenu(View view) {
-        SettingsDialog cdd=new SettingsDialog(MainActivity.this, music);
+        final SettingsDialog cdd=new SettingsDialog(MainActivity.this, music);
         cdd.show();
         cdd.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialogInterface) {
                 if (dataChanged)
                     getUpdatedList();
+                if (cdd.getSignIn())
+                    signIn();
+
             }
         });
+    }
+
+    private void signIn() {
+        System.out.println("Signing in");
+        try {
+            Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
+            startActivityForResult(signInIntent, RC_SIGN_IN);
+        }
+        catch (NullPointerException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Login failed", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
+        if (requestCode == RC_SIGN_IN) {
+            GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
+            handleSignInResult(result);
+        }
+    }
+
+    private void handleSignInResult(GoogleSignInResult result) {
+        if (!result.isSuccess())
+            System.out.println(result.getStatus());
+        else if (result.isSuccess()) {
+            Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT).show();
+            // Signed in successfully, show authenticated UI.
+            GoogleSignInAccount acct = result.getSignInAccount();
+            if (acct != null) {
+                System.out.println("acct is not null");
+                name = acct.getDisplayName();
+                Uri personPhoto = acct.getPhotoUrl();
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putString("display_name", name);
+                editor.putString(String.valueOf(personPhoto), "null");
+                editor.putBoolean("google_play_services", true);
+                editor.apply();
+                gps=true;
+            }
+        }
     }
 
     public void themesDialog(View view) {
@@ -301,4 +350,21 @@ public class MainActivity extends AppCompatActivity {
         ((BaseAdapter)mListView.getAdapter()).notifyDataSetChanged();
         dataChanged = false;
     }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    //public boolean getPlayServices(){return gps;}
 }

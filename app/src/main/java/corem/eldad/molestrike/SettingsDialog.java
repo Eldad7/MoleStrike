@@ -2,10 +2,16 @@ package corem.eldad.molestrike;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -15,18 +21,27 @@ import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.Switch;
 
+import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.SignInButton;
+import com.google.android.gms.common.api.GoogleApiClient;
+
+import static corem.eldad.molestrike.MainActivity.mGoogleApiClient;
+
 /**
  * Created by The Gate Keeper on 1/16/2017.
  *
  */
 
-public class SettingsDialog extends Dialog implements android.view.View.OnClickListener{
-
+public class SettingsDialog extends Dialog implements View.OnClickListener {
 
     public Activity c;
     public Dialog d;
+    public boolean signIn = false;
     private EditText editText;
     private Context context;
+    private SignInButton signInButton;
     private SeekBar musicVolume, soundfxVolume;
     private Switch music, soundfx;
     SharedPreferences settings;
@@ -40,6 +55,8 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
         this._music = _music;
     }
 
+    public boolean getSignIn(){return signIn;}
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,26 +64,33 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
         setContentView(R.layout.settings_dialog);
         settings = PreferenceManager.getDefaultSharedPreferences(context);
         editor = settings.edit();
-        String name = settings.getString("display_name", "DEFAULT");
         editText = (EditText) findViewById(R.id.display_name);
-        editText.setText(name);
-        editText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+        signInButton = (SignInButton) findViewById(R.id.sign_in_button);
+        signInButton.setOnClickListener(this);
+        if (!settings.getBoolean("gps", false)){
+            editText.setText(settings.getString("display_name", "DEFAULT"));
+            editText.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
 
-            }
+                }
 
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
 
-            }
+                }
 
-            @Override
-            public void afterTextChanged(Editable editable) {
-                newName = String.valueOf(editText.getText());
-                changeUserName(String.valueOf(editText.getText()));
-            }
-        });
+                @Override
+                public void afterTextChanged(Editable editable) {
+                    newName = String.valueOf(editText.getText());
+                    changeUserName(String.valueOf(editText.getText()));
+                }
+            });
+        }
+        else{
+            signInButton.setVisibility(View.GONE);
+            editText.setVisibility(View.GONE);
+        }
         music = (Switch) findViewById(R.id.music);
         music.setOnClickListener(this);
         music.setChecked(settings.getBoolean("music", true));
@@ -80,6 +104,8 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
                 if (_music.musicIsPlaying) {
                     float volume = (0.01f * seekBar.getProgress());
                     _music.setMusicVolume(volume);
+                    if (!music.isChecked())
+                        music.setChecked(true);
                 }
                 if (seekBar.getProgress()==0) {
                     editor.putBoolean("music", false);
@@ -197,6 +223,11 @@ public class SettingsDialog extends Dialog implements android.view.View.OnClickL
                     soundfxVolume.setEnabled(false);
                 }
                 editor.apply();
+                break;
+            }
+            case R.id.sign_in_button: {
+                signIn = true;
+                dismiss();
                 break;
             }
         }
