@@ -38,10 +38,10 @@ public class SplashActivity extends Activity {
         super.onCreate(savedInstanceState);
         this.setContentView(R.layout.splash_helper);
         pb = (ProgressBar) findViewById(R.id.progressBar);
-        Fabric.with(this, new Crashlytics());
+        //Fabric.with(this, new Crashlytics());
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = settings.edit();
-        logUser(settings);
+        //logUser(settings);
         if(!(settings.getBoolean("active", false))) {
             editor.putBoolean("active", true);
             editor.putString("display_name", "Player1");

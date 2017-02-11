@@ -8,16 +8,22 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.Switch;
 
@@ -26,6 +32,14 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.GoogleApiClient;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import static corem.eldad.molestrike.MainActivity.mGoogleApiClient;
 
@@ -65,10 +79,10 @@ public class SettingsDialog extends Dialog implements View.OnClickListener {
         settings = PreferenceManager.getDefaultSharedPreferences(context);
         editor = settings.edit();
         editText = (EditText) findViewById(R.id.display_name);
+        editText.setText(settings.getString("display_name", "DEFAULT"));
         signInButton = (SignInButton) findViewById(R.id.sign_in_button);
         signInButton.setOnClickListener(this);
-        if (!settings.getBoolean("gps", false)){
-            editText.setText(settings.getString("display_name", "DEFAULT"));
+        if (!settings.getBoolean("google_play_services", false)){
             editText.addTextChangedListener(new TextWatcher() {
                 @Override
                 public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -87,9 +101,9 @@ public class SettingsDialog extends Dialog implements View.OnClickListener {
                 }
             });
         }
-        else{
+        else {
             signInButton.setVisibility(View.GONE);
-            editText.setVisibility(View.GONE);
+            editText.setEnabled(false);
         }
         music = (Switch) findViewById(R.id.music);
         music.setOnClickListener(this);
@@ -107,7 +121,7 @@ public class SettingsDialog extends Dialog implements View.OnClickListener {
                     if (!music.isChecked())
                         music.setChecked(true);
                 }
-                if (seekBar.getProgress()==0) {
+                if (seekBar.getProgress() == 0) {
                     editor.putBoolean("music", false);
                     editor.apply();
                     music.setChecked(false);
@@ -130,15 +144,14 @@ public class SettingsDialog extends Dialog implements View.OnClickListener {
             musicVolume.setProgress(0);
             musicVolume.setFocusable(false);
             musicVolume.setEnabled(false);
-        }
-        else
+        } else
             musicVolume.setProgress(volume);
         soundfxVolume = (SeekBar) findViewById(R.id.soundFXSeekbar);
         soundfxVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
                 _music.setFXVolume(0.01f * seekBar.getProgress());
-                if (seekBar.getProgress()==0) {
+                if (seekBar.getProgress() == 0) {
                     editor.putBoolean("soundfx", false);
                     editor.apply();
                     soundfx.setChecked(false);
@@ -146,7 +159,8 @@ public class SettingsDialog extends Dialog implements View.OnClickListener {
             }
 
             @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
 
 
             @Override
@@ -160,8 +174,7 @@ public class SettingsDialog extends Dialog implements View.OnClickListener {
             soundfxVolume.setProgress(0);
             soundfxVolume.setFocusable(false);
             soundfxVolume.setEnabled(false);
-        }
-        else
+        } else
             soundfxVolume.setProgress(volume);
     }
 

@@ -82,8 +82,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             }
         }).start();
         Toast.makeText(this, "Hello " + name, Toast.LENGTH_SHORT).show();
-        Fabric.with(this, new Crashlytics());
-        logUser(prefs);
+        //Fabric.with(this, new Crashlytics());
+        //logUser(prefs);
         /*mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .enableAutoManage(this *//* FragmentActivity *//*,
                         this *//* OnConnectionFailedListener *//*)
@@ -266,10 +266,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             if (acct != null) {
                 System.out.println("acct is not null");
                 name = acct.getDisplayName();
-                Uri personPhoto = acct.getPhotoUrl();
+                String uri = acct.getPhotoUrl().toString();
                 SharedPreferences.Editor editor = prefs.edit();
                 editor.putString("display_name", name);
-                editor.putString(String.valueOf(personPhoto), "null");
+                editor.putString("uri", uri);
                 editor.putBoolean("google_play_services", true);
                 editor.apply();
                 gps=true;
