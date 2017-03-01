@@ -2,13 +2,12 @@ package corem.eldad.molestrike;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.net.Uri;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -29,9 +28,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.games.Games;
-import java.util.ArrayList;
-import io.fabric.sdk.android.Fabric;
 
+import java.util.ArrayList;
 /**
  * @author ©EldadC
  *
@@ -62,6 +60,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private LeaderBoardAdapter listAdapter;
     public static GoogleApiClient mGoogleApiClient;
     private static final int RC_SIGN_IN = 9001;
+    private GoogleSignInOptions gso;
+    private boolean mResolvingConnectionFailure = false;
+    private boolean mAutoStartSignInflow = true;
+    private boolean mSignInClicked = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,12 +86,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         Toast.makeText(this, "Hello " + name, Toast.LENGTH_SHORT).show();
         //Fabric.with(this, new Crashlytics());
         //logUser(prefs);
-        /*mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .enableAutoManage(this *//* FragmentActivity *//*,
-                        this *//* OnConnectionFailedListener *//*)
-                .addApi(Games.API)
-                .addScope(Games.SCOPE_GAMES)
-                .build();*/
         mListView = (ListView) findViewById(R.id.list);
         new Thread(new Runnable() {
             @Override
@@ -110,8 +106,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .enableAutoManage(this, this)
                 .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
-                /*.addApi(Games.API)
-                .addScope(Games.SCOPE_GAMES)*/
                 .build();
     }
 
@@ -120,6 +114,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         super.onStop();
         if (music.getMusicIsPlaying())
             music.pause();
+        mGoogleApiClient.disconnect();
     }
 
     @Override
@@ -177,7 +172,19 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         }
         topScore.setText(String.format(getResources().getString(R.string.top), score));
         if (prefs.getBoolean("google_play_services", false))
-        {}
+        {
+            gps=true;
+            GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN)
+                    .requestEmail()
+                    .build();
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .addApi(Games.API)
+                    .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .build();
+            mGoogleApiClient.connect(GoogleApiClient.SIGN_IN_MODE_OPTIONAL);
+        }
     }
 
     public void chooseLevel(View view){
@@ -235,7 +242,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     private void signIn() {
-        System.out.println("Signing in");
         try {
             Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
             startActivityForResult(signInIntent, RC_SIGN_IN);
@@ -257,22 +263,19 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     private void handleSignInResult(GoogleSignInResult result) {
-        if (!result.isSuccess())
-            System.out.println(result.getStatus());
-        else if (result.isSuccess()) {
+        if (result.isSuccess()) {
             Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT).show();
             // Signed in successfully, show authenticated UI.
             GoogleSignInAccount acct = result.getSignInAccount();
             if (acct != null) {
                 System.out.println("acct is not null");
                 name = acct.getDisplayName();
-                String uri = acct.getPhotoUrl().toString();
                 SharedPreferences.Editor editor = prefs.edit();
                 editor.putString("display_name", name);
-                editor.putString("uri", uri);
                 editor.putBoolean("google_play_services", true);
                 editor.apply();
                 gps=true;
+                togglePrefs(prefs);
             }
         }
     }
@@ -352,19 +355,48 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        Toast.makeText(this, "error " + connectionResult.getErrorCode(),Toast.LENGTH_LONG).show();
+        if (connectionResult.hasResolution()) {
+            try {
+                connectionResult.startResolutionForResult(this,ConnectionResult.SIGN_IN_REQUIRED);
+            } catch (IntentSender.SendIntentException e) {
+                e.printStackTrace();
+            }
+            return;
+        }
 
+        // if the sign-in button was clicked or if auto sign-in is enabled,
+        // launch the sign-in flow
+        if (mSignInClicked || mAutoStartSignInflow) {
+            mAutoStartSignInflow = false;
+            mSignInClicked = false;
+            mResolvingConnectionFailure = true;
+
+            // Attempt to resolve the connection failure using BaseGameUtils.
+            // The R.string.signin_other_error value should reference a generic
+            // error string in your strings.xml file, such as "There was
+            // an issue with sign-in, please try again later."
+
+        }
+
+        // Put code here to display the sign-in button
     }
+
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-
+        Toast.makeText(this, "Signed in successfully", Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onConnectionSuspended(int i) {
-
+        mGoogleApiClient.connect();
     }
 
-    //public boolean getPlayServices(){return gps;}
+    public boolean getUserIsConnected(){
+        if (mGoogleApiClient!=null && mGoogleApiClient.isConnected())
+            return true;
+        return false;
+    }
 }

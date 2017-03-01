@@ -219,7 +219,7 @@ public class GameActivity extends AppCompatActivity {
     private void initViews(int moles) {
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
-        rabbitLocations = new float[2];
+        rabbitLocations = new float[3];
         float screenHeight = metrics.heightPixels;
         ImageView topLeft = (ImageView) findViewById(R.id.topLeftMole);
         ImageView bottomLeft = (ImageView) findViewById(R.id.bottomLeftMole);
@@ -229,6 +229,7 @@ public class GameActivity extends AppCompatActivity {
         ImageView bottomRight = (ImageView) findViewById(R.id.bottomRightMole);
         rabbitLocations[0] = screenHeight - 300;
         rabbitLocations[1] = screenHeight - 600;
+        rabbitLocations[2] = screenHeight - 900;
         if (moles>7) {
             ImageView bottomMiddleMole = (ImageView) findViewById(R.id.bottomMiddleMole);
             ImageView rightMiddleMole = (ImageView) findViewById(R.id.rightMiddleMole);
@@ -856,9 +857,9 @@ public class GameActivity extends AppCompatActivity {
                     }.start();
                 }
                 rb = new RabbitView(mContext);
-                rb.setY(rabbitLocations[rand % 2]);
+                rb.setY(rabbitLocations[rand % 3]);
                 contentView.addView(rb);
-                rb.Move(4500, rand % 2);
+                rb.Move(5000, rand % 2);
             }
             setMillisInFuture((rand * 1000) % 20000);
             start();
