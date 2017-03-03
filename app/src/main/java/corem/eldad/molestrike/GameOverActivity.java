@@ -84,16 +84,6 @@ public class GameOverActivity extends AppCompatActivity implements View.OnClickL
                 }
             }
         }).start();
-        if (handler){
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    Intent intent = new Intent("finish_activity");
-                    sendBroadcast(intent);
-                    finish();
-                }
-            },4000);
-        }
     }
 
     @Override
@@ -117,7 +107,6 @@ public class GameOverActivity extends AppCompatActivity implements View.OnClickL
                         .setText("I just scored " + newHighScore + " on Mole Strike! Think you can beat me??")
                         .setContentUrl(Uri.parse("https://play.google.com/store/apps/details?id=corem.eldad.molestrike"))
                         .getIntent();
-
                 startActivityForResult(shareIntent, 0);
             }
         }
