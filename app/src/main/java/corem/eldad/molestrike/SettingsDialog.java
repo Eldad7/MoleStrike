@@ -2,46 +2,20 @@ package corem.eldad.molestrike;
 
 import android.app.Activity;
 import android.app.Dialog;
-import android.content.ContentResolver;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v7.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.View;
 import android.view.Window;
+import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.Switch;
-
-import com.google.android.gms.auth.api.Auth;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.SignInButton;
-import com.google.android.gms.common.api.GoogleApiClient;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-
-import static corem.eldad.molestrike.MainActivity.mGoogleApiClient;
 
 /**
  * Created by The Gate Keeper on 1/16/2017.
@@ -52,12 +26,13 @@ public class SettingsDialog extends Dialog implements View.OnClickListener {
 
     public Activity c;
     public Dialog d;
-    public boolean signIn = false;
+    public boolean signIn = false, showAch = false;
     private EditText editText;
     private Context context;
     private SignInButton signInButton;
     private SeekBar musicVolume, soundfxVolume;
     private Switch music, soundfx;
+    private Button showAchievements;
     SharedPreferences settings;
     SharedPreferences.Editor editor;
     Music _music;
@@ -82,6 +57,7 @@ public class SettingsDialog extends Dialog implements View.OnClickListener {
         editText.setText(settings.getString("display_name", "DEFAULT"));
         signInButton = (SignInButton) findViewById(R.id.sign_in_button);
         signInButton.setOnClickListener(this);
+        showAchievements = (Button) findViewById(R.id.show_achievements);
         if (!settings.getBoolean("google_play_services", false)){
             editText.addTextChangedListener(new TextWatcher() {
                 @Override
@@ -103,7 +79,10 @@ public class SettingsDialog extends Dialog implements View.OnClickListener {
         }
         else {
             signInButton.setVisibility(View.GONE);
+            signInButton.setOnClickListener(null);
             editText.setEnabled(false);
+            showAchievements.setVisibility(View.VISIBLE);
+            showAchievements.setOnClickListener(this);
         }
         music = (Switch) findViewById(R.id.music);
         music.setOnClickListener(this);
@@ -240,6 +219,11 @@ public class SettingsDialog extends Dialog implements View.OnClickListener {
             }
             case R.id.sign_in_button: {
                 signIn = true;
+                dismiss();
+                break;
+            }
+            case R.id.show_achievements:{
+                showAch = true;
                 dismiss();
                 break;
             }

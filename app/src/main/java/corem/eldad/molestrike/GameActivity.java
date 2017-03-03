@@ -43,7 +43,7 @@ public class GameActivity extends AppCompatActivity {
     long timer, devilTimer,angelTimer;
     boolean lose = false;
     private Timer counter;
-    int life=3, level, j=0,numberOfMoles, background, top=0;
+    int life=3, level, j=0,numberOfMoles, background, top=0, devilMoles;
     private DevilTimer dcounter;
     private AngelTimer acounter;
     private RabbitTimer rabbitTimer;
@@ -92,6 +92,7 @@ public class GameActivity extends AppCompatActivity {
         }
         System.out.println(level);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        editor = prefs.edit();
         db = new MoleStrikeDB(this);
         music = new Music(this.getBaseContext(), this);
         setTopScore();
@@ -105,6 +106,7 @@ public class GameActivity extends AppCompatActivity {
                 getFirstTimers();
                 for (int i = 0; i < numberOfMoles; i++)
                     characters[i].setBackgroundResource(R.drawable.jmole1);
+                devilMoles = prefs.getInt("devil_moles", 0);
             }
         }).run();
         devilTimer=angelTimer=timer=2500;
@@ -177,6 +179,10 @@ public class GameActivity extends AppCompatActivity {
         SQLiteDatabase dbHelper = db.getWritableDatabase();
         if (lose && j > top) {
             newHigh = true;
+            editor.putInt("total_moles", top+j);
+            if (j>99)
+                editor.putBoolean("man_machine", true);
+            editor.apply();
             db.updateTopScore(prefs.getString("display_name", "Player1"), j, dbHelper);
             if ((j < 80) && (j > 29))
                 if (level < 2) {
@@ -378,7 +384,6 @@ public class GameActivity extends AppCompatActivity {
                         moleAnimation = (AnimationDrawable) current.getBackground();
                         moleAnimation.start();
                         firstGame = false;
-                        editor = prefs.edit();
                         editor.putBoolean("first_time", false);
                         editor.apply();
                         new CountDownTimer(2000,1000){
@@ -570,6 +575,7 @@ public class GameActivity extends AppCompatActivity {
                             devilTimer -= 100;
                         j+=5;
                         count.setText(String.format(getResources().getString(R.string.score), j));
+                        editor.putInt("devil_moles", ++devilMoles);
                     }
                 dcounter.setClicked();
                     break;

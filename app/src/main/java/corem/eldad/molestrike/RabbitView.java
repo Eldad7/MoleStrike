@@ -129,7 +129,7 @@ public class RabbitView extends ImageView implements Animator.AnimatorListener, 
     @Override
     public void onAnimationUpdate(ValueAnimator animation) {
         setX((float) animation.getAnimatedValue());
-        if ((int) (float) animation.getAnimatedValue() % 2 == 0) {
+        if ((int) (float) animation.getAnimatedValue() % 5 == 0) {
             if (++frame == NB_FRAMES)
                 frame = 0;
             setImageBitmap(bmps[frame]);

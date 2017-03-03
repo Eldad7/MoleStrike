@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Handler;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -11,10 +12,12 @@ import android.os.Bundle;
 import android.support.v7.preference.PreferenceManager;
 import android.view.View;
 import android.view.animation.AnimationUtils;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import com.facebook.*;
 import com.facebook.share.widget.ShareButton;
+import com.google.android.gms.plus.PlusShare;
 
 /**Created by Eldad Corem
  * The Handler is used in order to give the Gameover screen to be visible
@@ -26,7 +29,7 @@ public class GameOverActivity extends AppCompatActivity implements View.OnClickL
     SharedPreferences prefs;
     ConstraintLayout cl;
     ImageButton Continue;
-    ShareButton share;
+    Button share;
     ImageView highScore, newLevel;
     boolean newHighScore,level, handler=true;
     int background;
@@ -47,7 +50,7 @@ public class GameOverActivity extends AppCompatActivity implements View.OnClickL
         newHighScore = b.getBoolean("highScore");
         highScore = (ImageView) findViewById(R.id.highScore);
         newLevel = (ImageView) findViewById(R.id.newLevel);
-        share = (ShareButton) findViewById(R.id.share_button);
+        share = (Button) findViewById(R.id.share_button);
         Continue = (ImageButton) findViewById(R.id.Continue);
         context = this;
         music = new Music(this.getBaseContext(), this);
@@ -109,7 +112,13 @@ public class GameOverActivity extends AppCompatActivity implements View.OnClickL
                 break;
             }
             case R.id.share_button:{
+                Intent shareIntent = new PlusShare.Builder(this)
+                        .setType("text/plain")
+                        .setText("I just scored " + newHighScore + " on Mole Strike! Think you can beat me??")
+                        .setContentUrl(Uri.parse("https://play.google.com/store/apps/details?id=corem.eldad.molestrike"))
+                        .getIntent();
 
+                startActivityForResult(shareIntent, 0);
             }
         }
 
