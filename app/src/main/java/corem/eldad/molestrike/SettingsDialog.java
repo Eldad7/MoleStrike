@@ -9,12 +9,19 @@ import android.os.Bundle;
 import android.support.v7.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.Switch;
+
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.login.LoginResult;
+import com.facebook.login.widget.LoginButton;
 import com.google.android.gms.common.SignInButton;
 
 /**
@@ -26,7 +33,7 @@ public class SettingsDialog extends Dialog implements View.OnClickListener {
 
     public Activity c;
     public Dialog d;
-    public boolean signIn = false, showAch = false;
+    public boolean signIn = false, facebookSignIn = false;
     private EditText editText;
     private Context context;
     private SignInButton signInButton;
@@ -37,6 +44,8 @@ public class SettingsDialog extends Dialog implements View.OnClickListener {
     SharedPreferences.Editor editor;
     Music _music;
     String newName = null;
+    private LoginButton login;
+    CallbackManager callbackManager;
 
     public SettingsDialog(Context context, Music _music) {
         super(context);
@@ -45,6 +54,8 @@ public class SettingsDialog extends Dialog implements View.OnClickListener {
     }
 
     public boolean getSignIn(){return signIn;}
+
+    public boolean getFacebookSignIn(){return facebookSignIn;}
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +69,9 @@ public class SettingsDialog extends Dialog implements View.OnClickListener {
         signInButton = (SignInButton) findViewById(R.id.sign_in_button);
         signInButton.setOnClickListener(this);
         showAchievements = (Button) findViewById(R.id.show_achievements);
+        login = (LoginButton) findViewById(R.id.login_button);
+        login.setReadPermissions("public_profile email");
+        login.setOnClickListener(this);
         if (!settings.getBoolean("google_play_services", false)){
             editText.addTextChangedListener(new TextWatcher() {
                 @Override
@@ -81,9 +95,9 @@ public class SettingsDialog extends Dialog implements View.OnClickListener {
             signInButton.setVisibility(View.GONE);
             signInButton.setOnClickListener(null);
             editText.setEnabled(false);
-            showAchievements.setVisibility(View.VISIBLE);
-            showAchievements.setOnClickListener(this);
         }
+        if (settings.getBoolean("facebook", false))
+            login.setVisibility(View.GONE);
         music = (Switch) findViewById(R.id.music);
         music.setOnClickListener(this);
         music.setChecked(settings.getBoolean("music", true));
@@ -157,6 +171,29 @@ public class SettingsDialog extends Dialog implements View.OnClickListener {
             soundfxVolume.setProgress(volume);
     }
 
+    public void setCallbackManager(CallbackManager callbackManager){
+        this.callbackManager = callbackManager;
+        login.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+            @Override
+            public void onSuccess(final LoginResult loginResult) {
+                // App code
+                Log.d("Molestrike", "Success facebook");
+            }
+
+            @Override
+            public void onCancel() {
+                // App code
+                Log.d("Molestrike", "cancel facebook");
+            }
+
+            @Override
+            public void onError(final FacebookException exception) {
+                // App code
+                Log.d("Molestrike", "fail facebook");
+            }
+        });
+    }
+
     @Override
     public void onDetachedFromWindow(){
         if (newName != null) {
@@ -222,8 +259,9 @@ public class SettingsDialog extends Dialog implements View.OnClickListener {
                 dismiss();
                 break;
             }
-            case R.id.show_achievements:{
-                showAch = true;
+
+            case R.id.login_button: {
+                facebookSignIn = true;
                 dismiss();
                 break;
             }

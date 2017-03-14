@@ -53,7 +53,9 @@ public class SplashActivity extends Activity {
             editor.putBoolean("first_time_angel", true);
             editor.putBoolean("first_time_rabbit", true);
             editor.putBoolean("google_play_services", false);
+            editor.putBoolean("facebook", false);
             editor.putBoolean("man_machine", false);
+            editor.putInt("top_score", 0);
             editor.putInt("total_moles", 0);
             editor.putInt("devil_moles", 0);
             editor.apply();

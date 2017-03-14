@@ -214,6 +214,7 @@ public class GameActivity extends AppCompatActivity {
             Bundle bundle = new Bundle();
             bundle.putBoolean("highScore", newHigh);
             bundle.putBoolean("newLevel", newLevel);
+            bundle.putInt("top", top);
             rabbitTimer.cancel();
             intent.putExtras(bundle);
             registerReceiver(broadcast_receiver, new IntentFilter("finish_activity"));
