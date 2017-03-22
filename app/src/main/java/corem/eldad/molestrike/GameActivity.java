@@ -223,7 +223,7 @@ public class GameActivity extends AppCompatActivity {
     }
 
 
-    private void initViews(int moles) {
+    private void initViews(int moles) { //Creates and sets all game views
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
         rabbitLocations = new float[3];
@@ -278,7 +278,7 @@ public class GameActivity extends AppCompatActivity {
         resumed = false;
     }
 
-    private void togglePrefs(SharedPreferences prefs) {
+    private void togglePrefs(SharedPreferences prefs) { //Sets preferences
         if (prefs.getBoolean("music", true)) {
             if (!music.musicIsPlaying) {
                 music.run();
@@ -366,7 +366,7 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
-    private void showMole() {
+    private void showMole() {   //The mole transitions
         current = characters[0];
         current.setBackgroundResource(R.drawable.goingup);
         moleAnimation = (AnimationDrawable) current.getBackground();
@@ -414,7 +414,7 @@ public class GameActivity extends AppCompatActivity {
         instructions.setVisibility(View.VISIBLE);
     }
 
-    private void showDevil(final ImageView current){
+    private void showDevil(final ImageView current){                //Devil init view
         current.setBackgroundResource(R.drawable.goingupdevil);
         moleAnimation = (AnimationDrawable) current.getBackground();
         moleAnimation.start();
@@ -468,7 +468,7 @@ public class GameActivity extends AppCompatActivity {
         instructions.setVisibility(View.VISIBLE);
     }
 
-    private void startTransition(ImageView current, int type) {
+    private void startTransition(ImageView current, int type) {     //ansitioningTr
         moleAnimation = (AnimationDrawable) current.getBackground();
         moleAnimation.start();
         switch (type){
@@ -549,7 +549,7 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
-    private void gameOn(int type) {
+    private void gameOn(int type) {     //New Round
         switch (type){
             case 1: {
                 if (!counter.getClicked() && !rb.getHit()) {

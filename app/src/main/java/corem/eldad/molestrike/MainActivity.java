@@ -40,7 +40,6 @@ import com.google.android.gms.games.achievement.Achievements;
 import com.google.android.gms.games.leaderboard.LeaderboardScore;
 import com.google.android.gms.games.leaderboard.LeaderboardVariant;
 import com.google.android.gms.games.leaderboard.Leaderboards;
-
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import io.fabric.sdk.android.Fabric;
@@ -125,7 +124,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         button.setTypeface(custom_font);
         button.setTextColor(Color.WHITE);
         topScore = (TextView) findViewById(R.id.topScore);
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+        gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
                 .build();
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -135,11 +134,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         new Thread(new Runnable() {
             @Override
             public void run() {
-                list.add(getResources().getString(R.string.achievement_junior));
-                list.add(getResources().getString(R.string.achievement_advanced));
-                list.add(getResources().getString(R.string.achievement_expert));
-                list.add(getResources().getString(R.string.achievement_junior));
-                list.add(getResources().getString(R.string.achievement_junior));
+                list.add(getResources().getString(R.string.achievement_junior_molestriker));
+                list.add(getResources().getString(R.string.achievement_advanced_mole_striker));
+                list.add(getResources().getString(R.string.achievement_expert_mole_striker));
+                list.add(getResources().getString(R.string.achievement_devil_slayer));
+                list.add(getResources().getString(R.string.achievement_man_machine));
             }
         }).start();
     }
@@ -149,13 +148,83 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         super.onStop();
         if (music.getMusicIsPlaying())
             music.pause();
+    }
+
+    @Override
+    protected void onDestroy(){
         mGoogleApiClient.disconnect();
+        super.onDestroy();
     }
 
     @Override
     protected void onResume(){
         super.onResume();
+        if (mGoogleApiClient.isConnected()){
+            int top = prefs.getInt("top_score", 0);
 
+            if (score < top) {
+                Toast.makeText(this, String.valueOf(top), Toast.LENGTH_SHORT).show();
+                Log.d("MoleStrike", "APP id - + " + getString(R.string.app_id) + "MainActivity - submitting to Leaderboard - " + getString(R.string.leaderboard_top_scores));
+                Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_top_scores), top);
+            }
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    int moles = prefs.getInt("total_moles", 0);
+                    if (moles>=50){
+                        PendingResult p = Games.Achievements.load(mGoogleApiClient, false);
+                        Achievements.LoadAchievementsResult r = (Achievements.LoadAchievementsResult) p.await(3, TimeUnit.SECONDS);
+                        int status = r.getStatus().getStatusCode();
+                        if (status != STATUS_OK) {
+                            r.release();
+                            return;
+                        }
+                        AchievementBuffer buf = r.getAchievements();
+                        for (int i = 0; i < list.size(); i++) {
+                            Achievement ach = buf.get(i);
+                            switch (i) {
+                                case 0:
+                                    if (ach.getState() != Achievement.STATE_UNLOCKED) {
+                                        Games.Achievements.unlock(mGoogleApiClient, list.get(i));
+                                        unlocked = true;
+                                        Log.d("MoleStrike", "Unlocked");
+                                    }
+                                    break;
+                                case 1:
+                                    if (ach.getState() != Achievement.STATE_UNLOCKED && moles > 124) {
+                                        Games.Achievements.unlock(mGoogleApiClient, list.get(i));
+                                        unlocked = true;
+                                    }
+                                    break;
+                                case 2:
+                                    if (ach.getState() != Achievement.STATE_UNLOCKED && moles > 249) {
+                                        Games.Achievements.unlock(mGoogleApiClient, list.get(i));
+                                        unlocked = true;
+                                    }
+                                    break;
+                                case 3:
+                                    if (ach.getState() != Achievement.STATE_UNLOCKED && prefs.getBoolean("man_machine", true)) {
+                                        Games.Achievements.unlock(mGoogleApiClient, list.get(i));
+                                        SharedPreferences.Editor editor = prefs.edit();
+                                        editor.putBoolean("man_machine", false);
+                                        editor.apply();
+                                        unlocked = true;
+                                    }
+                                    break;
+                                case 4:
+                                    if (ach.getState() != Achievement.STATE_UNLOCKED && prefs.getInt("devil_moles", 0) > 149) {
+                                        Games.Achievements.unlock(mGoogleApiClient, list.get(i));
+                                        unlocked = true;
+                                    }
+                                    break;
+                            }
+                        }
+                        r.release();
+                        buf.release();
+                    }
+                }
+            }).start();
+        }
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -224,7 +293,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         if (prefs.getBoolean("facebook", false))
             facebook = true;
         if (mGoogleApiClient.isConnected())
-            Games.Leaderboards.loadCurrentPlayerLeaderboardScore(mGoogleApiClient, getResources().getString(R.string.leaderboard_top_scores),
+           Games.Leaderboards.loadCurrentPlayerLeaderboardScore(mGoogleApiClient, getString(R.string.leaderboard_top_scores),
                     LeaderboardVariant.TIME_SPAN_ALL_TIME, LeaderboardVariant.COLLECTION_PUBLIC).setResultCallback(new ResultCallback<Leaderboards.LoadPlayerScoreResult>() {
                 @Override
                 public void onResult(Leaderboards.LoadPlayerScoreResult arg0) {
@@ -242,7 +311,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     private void gsoForPlay() {
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN)
+        gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN)
                 .requestEmail()
                 .requestScopes(new Scope(Scopes.GAMES))
                 .build();
@@ -316,6 +385,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     private void signIn() {
+        Log.d("signIn", " Signed in");
         try {
             Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
             startActivityForResult(signInIntent, RC_SIGN_IN);
@@ -328,22 +398,25 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-
+        if (resultCode == 10001)
+            mGoogleApiClient.connect(GoogleApiClient.SIGN_IN_MODE_OPTIONAL);
         super.onActivityResult(requestCode, resultCode, data);
         // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
         if (requestCode == RC_SIGN_IN && !gps) {
             GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
             handleSignInResult(result);
         }
+
     }
 
     private void handleSignInResult(GoogleSignInResult result) {
+        Log.d("handleSignInResult", result.getStatus().toString());
         if (result.isSuccess()) {
             Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT).show();
             // Signed in successfully, show authenticated UI.
             GoogleSignInAccount acct = result.getSignInAccount();
             if (acct != null) {
-                System.out.println("acct is not null");
+                //name = Games.Players.getCurrentPlayerId(mGoogleApiClient);
                 name = acct.getDisplayName();
                 SharedPreferences.Editor editor = prefs.edit();
                 editor.putString("display_name", name);
@@ -448,7 +521,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             } catch (IntentSender.SendIntentException e) {
                 e.printStackTrace();
             }
-            return;
         }
     }
 
@@ -460,73 +532,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         if (mListView.getVisibility() == View.VISIBLE)
             mListView.setVisibility(View.GONE);
         button.setText(R.string.slb);
-        int top = prefs.getInt("top_score", 0);
-        if (score < top) {
-            Log.d("MoleStrike", "MainActivity - submitting to Leaderboard");
-            Games.Leaderboards.submitScore(mGoogleApiClient, getResources().getString(R.string.leaderboard_top_scores), top);
-        }
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                int moles = prefs.getInt("total_moles", 0);
-                if (moles>=50){
-                    PendingResult p = Games.Achievements.load(mGoogleApiClient, false);
-                    Achievements.LoadAchievementsResult r = (Achievements.LoadAchievementsResult) p.await(3, TimeUnit.SECONDS);
-                    int status = r.getStatus().getStatusCode();
-                    if (status != STATUS_OK) {
-                        r.release();
-                        return;
-                    }
-                    AchievementBuffer buf = r.getAchievements();
-                    for (int i = 0; i < list.size(); i++) {
-                        Achievement ach = buf.get(i);
-                        switch (i) {
-                            case 0:
-                                if (ach.getState() != Achievement.STATE_UNLOCKED) {
-                                    Games.Achievements.unlock(mGoogleApiClient, list.get(i));
-                                    unlocked = true;
-                                    Log.d("MoleStrike", "Unlocked");
-                                }
-                                break;
-                            case 1:
-                                if (ach.getState() != Achievement.STATE_UNLOCKED && moles > 124) {
-                                    Games.Achievements.unlock(mGoogleApiClient, list.get(i));
-                                    unlocked = true;
-                                }
-                                break;
-                            case 2:
-                                if (ach.getState() != Achievement.STATE_UNLOCKED && moles > 249) {
-                                    Games.Achievements.unlock(mGoogleApiClient, list.get(i));
-                                    unlocked = true;
-                                }
-                                break;
-                            case 3:
-                                if (ach.getState() != Achievement.STATE_UNLOCKED && prefs.getBoolean("man_machine", true)) {
-                                    Games.Achievements.unlock(mGoogleApiClient, list.get(i));
-                                    SharedPreferences.Editor editor = prefs.edit();
-                                    editor.putBoolean("man_machine", false);
-                                    editor.apply();
-                                    unlocked = true;
-                                }
-                                break;
-                            case 4:
-                                if (ach.getState() != Achievement.STATE_UNLOCKED && prefs.getInt("devil_moles", 0) > 149) {
-                                    Games.Achievements.unlock(mGoogleApiClient, list.get(i));
-                                    unlocked = true;
-                                }
-                                break;
-                        }
-                    }
-                    r.release();
-                    buf.release();
-                }
-            }
-        }).start();
     }
 
     @Override
     public void onConnectionSuspended(int i) {
-        mGoogleApiClient.connect();
+        mGoogleApiClient.connect(GoogleApiClient.SIGN_IN_MODE_OPTIONAL);
     }
 
     @Override
@@ -534,7 +544,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         switch (view.getId()){
             case R.id.show_achievements:{
                 if (mGoogleApiClient.isConnected() && mGoogleApiClient.hasConnectedApi(Games.API))
-                    startActivityForResult(Games.Achievements.getAchievementsIntent(mGoogleApiClient), 1);
+                    startActivityForResult(Games.Achievements.getAchievementsIntent(mGoogleApiClient), 0);
                 else
                     Toast.makeText(getBaseContext(), "Must connect to Google Play Services", Toast.LENGTH_SHORT).show();
                 break;
@@ -542,7 +552,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
             case R.id.button:{
                 if (mGoogleApiClient.isConnected() && mGoogleApiClient.hasConnectedApi(Games.API))
-                    startActivityForResult(Games.Leaderboards.getLeaderboardIntent(mGoogleApiClient, getResources().getString(R.string.leaderboard_top_scores)), 0);
+                    startActivityForResult(Games.Leaderboards.getAllLeaderboardsIntent(mGoogleApiClient), 0);
                 else
                     showScoreboard(findViewById(R.id.button));
             }

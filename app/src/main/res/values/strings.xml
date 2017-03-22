@@ -18,7 +18,7 @@
     <string name="error">error</string>
     <string name="success">success</string>
     <string name="successfully_posted_post">Successfully posted post!</string>
-    <string name="ok">ok</string>
+    <string name="ok">OK</string>
     <string name="slb">Show Leaderboard</string>
 
     <string-array name="themes_array_titles">

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_id">158541207937</string>
+    <string name="package_name">corem.eldad.molestrike</string>
+    <string name="achievement_junior_molestriker">CgkIgbOrzs4EEAIQAg</string>
+    <string name="achievement_advanced_mole_striker">CgkIgbOrzs4EEAIQAw</string>
+    <string name="achievement_expert_mole_striker">CgkIgbOrzs4EEAIQBA</string>
+    <string name="achievement_man_machine">CgkIgbOrzs4EEAIQBQ</string>
+    <string name="achievement_devil_slayer">CgkIgbOrzs4EEAIQBg</string>
+    <string name="leaderboard_top_scores">CgkIgbOrzs4EEAIQCA</string>
+</resources>
